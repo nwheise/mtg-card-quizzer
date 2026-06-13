@@ -19,8 +19,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "public");
 
 const USER_AGENT = "mtg-quizzer/0.1 (nick@heise.org)";
+// `-t:basic` excludes every card with the Basic supertype (including full-art
+// printings). Note: `-is:basic` does NOT work for MSH — Scryfall still returns
+// the basics, and their printed reminder-only text ("({T}: Add {U}.)") renders
+// blank once cleanOracle() strips it, producing an empty "correct" answer.
 const SEARCH_URL =
-  "https://api.scryfall.com/cards/search?q=set%3Amsh+-is%3Abasic&unique=cards&order=name";
+  "https://api.scryfall.com/cards/search?q=set%3Amsh+-t%3Abasic&unique=cards&order=name";
 const SYMBOLOGY_URL = "https://api.scryfall.com/symbology";
 
 function getJson(url) {
@@ -149,7 +153,12 @@ async function main() {
   const raw = await fetchAllCards();
 
   const entries = raw.flatMap(toQuizCards);
-  const cards = entries.filter((c) => c.artCrop && c.oracleText.length > 0);
+  // Require art and *meaningful* oracle text. A card whose entire oracle text is
+  // reminder text (parentheticals) — e.g. a basic land's "({T}: Add {U}.)" —
+  // renders blank in the UI once cleanOracle() strips it, so it can't be a valid
+  // quiz answer. Mirror that stripping here to drop such cards at build time.
+  const meaningfulText = (t) => t.replace(/\s*\([^)]*\)/g, "").trim().length > 0;
+  const cards = entries.filter((c) => c.artCrop && meaningfulText(c.oracleText));
 
   const dropped = entries.length - cards.length;
   cards.sort((a, b) => a.name.localeCompare(b.name));
