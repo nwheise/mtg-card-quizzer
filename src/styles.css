@@ -576,6 +576,43 @@ body {
 
 /* Narrow screens: stacked, centered, comfortable reading width */
 @media (max-width: 899px) {
+  /* Header on two rows: title with the gear pinned to its top-right, and the
+     scoreboard spanning the full width below. `display: contents` lets the
+     scoreboard and gear (wrapped in .header-right) act as grid items here. */
+  .app-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "title gear"
+      "score score";
+    align-items: start;
+    gap: 1rem;
+  }
+  .app-title {
+    grid-area: title;
+  }
+  .header-right {
+    display: contents;
+  }
+  .settings {
+    grid-area: gear;
+  }
+  .settings-toggle {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+  .scoreboard {
+    grid-area: score;
+    gap: 0.6rem;
+  }
+  /* Spread the four stats evenly across the row instead of letting them and
+     the gear fight for space (which squished the gear off the edge). */
+  .stat {
+    flex: 1;
+    min-width: 0;
+    padding-inline: 0.5rem;
+  }
+
   .card-prompt {
     margin-bottom: 1.25rem;
   }

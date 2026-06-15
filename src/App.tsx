@@ -97,6 +97,12 @@ export function App() {
       );
       setProgress(updated);
       saveProgress(updated);
+
+      // On narrow screens the options sit below the fold, so after answering
+      // scroll back up to reveal the full card without the player having to.
+      if (window.matchMedia("(max-width: 899px)").matches) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     },
     [round, pickedIndex, score, progress],
   );
