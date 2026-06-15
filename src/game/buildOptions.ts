@@ -1,4 +1,5 @@
-import type { QuizCard, Round } from "../types.ts";
+import type { FieldId, QuizCard, Round } from "../types.ts";
+import { FIELDS } from "./fields.ts";
 
 const OPTION_COUNT = 6;
 
@@ -11,14 +12,23 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
-// Builds a round for `card`: the correct option plus 8 distractors drawn from
-// the same set. Distractors prefer cards sharing the prompt's primary type
-// (e.g. other creatures) so the choices feel plausible, falling back to any
-// card if there aren't enough. Cards whose oracle text is identical to the
-// correct answer are skipped so there's never an ambiguous duplicate.
-export function buildRound(card: QuizCard, allCards: QuizCard[]): Round {
+// Builds a round for `card`: the correct option plus distractors drawn from the
+// same set, all showing the value of `quizField` (oracle text, mana cost, …).
+// Distractors prefer cards sharing the prompt's primary type (e.g. other
+// creatures) so the choices feel plausible, falling back to any card if there
+// aren't enough. Cards whose value for this field is identical to the correct
+// answer — or that don't have the field at all — are skipped so there's never
+// an ambiguous or blank choice.
+export function buildRound(
+  card: QuizCard,
+  allCards: QuizCard[],
+  quizField: FieldId,
+): Round {
+  const field = FIELDS[quizField];
+  const correctValue = field.value(card);
+
   const others = allCards.filter(
-    (c) => c.id !== card.id && c.oracleText !== card.oracleText,
+    (c) => c.id !== card.id && field.has(c) && field.value(c) !== correctValue,
   );
 
   const sameType = shuffle(
@@ -27,12 +37,13 @@ export function buildRound(card: QuizCard, allCards: QuizCard[]): Round {
   const rest = shuffle(others.filter((c) => c.primaryType !== card.primaryType));
 
   const distractors: QuizCard[] = [];
-  const seenText = new Set<string>([card.oracleText]);
+  const seenValues = new Set<string>([correctValue]);
   for (const pool of [sameType, rest]) {
     for (const c of pool) {
       if (distractors.length >= OPTION_COUNT - 1) break;
-      if (seenText.has(c.oracleText)) continue;
-      seenText.add(c.oracleText);
+      const value = field.value(c);
+      if (seenValues.has(value)) continue;
+      seenValues.add(value);
       distractors.push(c);
     }
   }
@@ -40,6 +51,7 @@ export function buildRound(card: QuizCard, allCards: QuizCard[]): Round {
   const options = shuffle([card, ...distractors]);
   return {
     card,
+    quizField,
     options,
     correctIndex: options.findIndex((c) => c.id === card.id),
   };

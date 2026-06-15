@@ -1,8 +1,9 @@
 import type { Round, SymbolMap } from "../types.ts";
 import { OptionCard, type OptionState } from "./OptionCard.tsx";
 
-// Renders the 9 oracle-text choices. Once the player has picked, every tile's
-// visual state reflects the outcome (their pick + the correct answer).
+// Renders the choices for whichever part is being quizzed this round. Once the
+// player has picked, every tile's visual state reflects the outcome (their pick
+// + the correct answer).
 export function OptionsGrid({
   round,
   symbols,
@@ -31,6 +32,7 @@ export function OptionsGrid({
         <OptionCard
           key={card.id}
           card={card}
+          quizField={round.quizField}
           symbols={symbols}
           index={index}
           state={stateFor(index)}

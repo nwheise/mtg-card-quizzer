@@ -80,10 +80,113 @@ body {
   border-radius: 4px;
 }
 
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
 /* Scoreboard */
 .scoreboard {
   display: flex;
   gap: 0.5rem;
+}
+
+/* Customization gear + popover */
+.settings {
+  position: relative;
+}
+
+.settings-toggle {
+  background: var(--bg-2);
+  color: var(--text);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.settings-toggle:hover,
+.settings-toggle[aria-expanded="true"] {
+  background: var(--panel-hover);
+  border-color: var(--accent);
+}
+
+.settings-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 20;
+  width: min(320px, 90vw);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+.settings-hint {
+  margin: 0 0 0.7rem;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+}
+
+.settings-row + .settings-row {
+  border-top: 1px solid var(--border-soft);
+}
+
+.settings-row-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.role-toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  background: var(--bg-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.role-btn {
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+.role-btn:hover:not(:disabled):not(.role-btn--active) {
+  color: var(--text);
+}
+
+.role-btn--active {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.role-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .stat {
@@ -172,8 +275,9 @@ body {
   object-position: right center;
 }
 
-/* Type line beneath the art, echoing a real card. We show only the primary
-   type (matching the options, which are all the same type). */
+/* Type line beneath the art, echoing a real card. The primary type is always
+   shown (it matches the options, which are all the same type); the subtypes are
+   appended only when the player routes the type line to the prompt. */
 .card-typeline {
   margin-top: 0.5rem;
   padding: 0.32rem 0.6rem;
@@ -183,6 +287,41 @@ body {
   font-size: 0.95rem;
   font-weight: 600;
   letter-spacing: 0.01em;
+}
+
+/* Extra card parts the player has routed to the prompt (keywords, P/T, oracle
+   text), as labeled rows beneath the type line. */
+.card-prompt-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+  padding: 0.45rem 0.6rem;
+  background: var(--bg-2);
+  border: 1px solid var(--border-soft);
+  border-radius: calc(var(--radius) - 5px);
+}
+
+.prompt-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.prompt-field-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+.prompt-field-value {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+
+.prompt-field-value .oracle-line {
+  display: block;
 }
 
 /* Feedback line */
@@ -239,23 +378,18 @@ body {
   font-weight: 600;
 }
 
-/* Power/toughness, pinned bottom-right like a real card. The tile reserves
-   bottom padding (.option--pt) so the badge never overlaps the rules text. */
-.option--pt {
-  padding-bottom: 1.85rem;
+/* Short answers (mana cost, power/toughness, keywords, type line) read better a
+   touch larger than dense oracle text. */
+.option--short .option-text {
+  font-size: 1.2rem;
+  font-weight: 600;
 }
 
-.option-pt {
-  position: absolute;
-  right: 0.7rem;
-  bottom: 0.6rem;
-  padding: 0.05rem 0.5rem;
-  border-radius: 6px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-soft);
-  font-size: 0.95rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+.option--short .card-title-cost .mana-symbol,
+.option--short .mana-symbol {
+  height: 1.1rem;
+  width: 1.1rem;
+  vertical-align: -0.18rem;
 }
 
 /* The card's own name, blacked out so it doesn't spoil the answer. The real

@@ -80,6 +80,7 @@ function normalize(card) {
     typeLine,
     primaryType: primaryType(typeLine),
     manaCost: card.mana_cost ?? faces[0]?.mana_cost ?? "",
+    keywords: card.keywords ?? [],
     power: card.power ?? faces[0]?.power,
     toughness: card.toughness ?? faces[0]?.toughness,
     rarity: card.rarity ?? "",
@@ -103,6 +104,8 @@ function faceToQuiz(card, face, i) {
     typeLine: face.type_line ?? "",
     primaryType: primaryType(face.type_line ?? ""),
     manaCost: face.mana_cost ?? "",
+    // Scryfall reports keywords at the card level, not per face.
+    keywords: card.keywords ?? [],
     power: face.power,
     toughness: face.toughness,
     rarity: card.rarity ?? "",

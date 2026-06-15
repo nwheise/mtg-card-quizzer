@@ -9,9 +9,18 @@ import {
   saveProgress,
   type Progress,
 } from "./game/progress.ts";
+import {
+  loadSettings,
+  saveSettings,
+  eligibleCards,
+  pickQuizField,
+  type Settings,
+} from "./game/settings.ts";
+import { FIELDS } from "./game/fields.ts";
 import { CardPrompt } from "./components/CardPrompt.tsx";
 import { OptionsGrid } from "./components/OptionsGrid.tsx";
 import { Scoreboard } from "./components/Scoreboard.tsx";
+import { SettingsPanel } from "./components/SettingsPanel.tsx";
 
 interface SessionScore {
   answered: number;
@@ -27,6 +36,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
 
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
+  const [settings, setSettings] = useState<Settings>(() => loadSettings());
   const [round, setRound] = useState<Round | null>(null);
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [score, setScore] = useState<SessionScore>(ZERO_SCORE);
@@ -44,9 +54,18 @@ export function App() {
   }, []);
 
   const nextRound = useCallback(
-    (deck: QuizCard[], prog: Progress, previousId: string | null) => {
-      const card = selectCard(deck, prog, previousId);
-      setRound(buildRound(card, deck));
+    (
+      deck: QuizCard[],
+      prog: Progress,
+      previousId: string | null,
+      config: Settings,
+    ) => {
+      // Only consider cards that have something to quiz under these settings
+      // (e.g. power/toughness can't be quizzed on a non-creature).
+      const pool = eligibleCards(deck, config);
+      const card = selectCard(pool.length > 0 ? pool : deck, prog, previousId);
+      const quizField = pickQuizField(card, config);
+      setRound(buildRound(card, deck, quizField));
       setPickedIndex(null);
     },
     [],
@@ -54,8 +73,8 @@ export function App() {
 
   // Kick off the first round once data is ready.
   useEffect(() => {
-    if (cards && !round) nextRound(cards, progress, null);
-  }, [cards, round, progress, nextRound]);
+    if (cards && !round) nextRound(cards, progress, null, settings);
+  }, [cards, round, progress, settings, nextRound]);
 
   const handlePick = useCallback(
     (index: number) => {
@@ -84,8 +103,18 @@ export function App() {
 
   const handleNext = useCallback(() => {
     if (!cards || !round || pickedIndex === null) return;
-    nextRound(cards, progress, round.card.id);
-  }, [cards, round, pickedIndex, progress, nextRound]);
+    nextRound(cards, progress, round.card.id, settings);
+  }, [cards, round, pickedIndex, progress, settings, nextRound]);
+
+  // Changing what's quizzed invalidates the current round, so start a fresh one.
+  const handleSettingsChange = useCallback(
+    (next: Settings) => {
+      setSettings(next);
+      saveSettings(next);
+      if (cards) nextRound(cards, progress, round?.card.id ?? null, next);
+    },
+    [cards, progress, round, nextRound],
+  );
 
   // Keyboard: 1-9 to pick, Enter/Space to advance.
   useEffect(() => {
@@ -109,6 +138,10 @@ export function App() {
     if (pickedIndex === null) return null;
     return answeredCorrectly ? "Correct!" : "Not quite — the right answer is highlighted.";
   }, [pickedIndex, answeredCorrectly]);
+
+  const question = round
+    ? `Which ${FIELDS[round.quizField].noun} belongs to this card?`
+    : "";
 
   if (error) {
     return (
@@ -136,19 +169,22 @@ export function App() {
     <main className="app">
       <header className="app-header">
         <h1>MSH Card Quizzer</h1>
-        <Scoreboard
-          answered={score.answered}
-          correct={score.correct}
-          streak={score.streak}
-          bestStreak={progress.bestStreak}
-        />
+        <div className="header-right">
+          <Scoreboard
+            answered={score.answered}
+            correct={score.correct}
+            streak={score.streak}
+            bestStreak={progress.bestStreak}
+          />
+          <SettingsPanel settings={settings} onChange={handleSettingsChange} />
+        </div>
       </header>
 
-      <CardPrompt card={round.card} symbols={symbols} />
+      <CardPrompt card={round.card} symbols={symbols} settings={settings} />
 
       <div className="play">
         <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
-          {feedback ?? "Which oracle text belongs to this card?"}
+          {feedback ?? question}
         </p>
 
         <OptionsGrid
