@@ -13,11 +13,28 @@ export function CardPrompt({
   card,
   symbols,
   settings,
+  revealed,
 }: {
   card: QuizCard;
   symbols: SymbolMap;
   settings: Settings;
+  revealed: boolean;
 }) {
+  // Once the player has answered, replace the (deliberately partial) prompt
+  // frame with the full card image so they can review the whole card.
+  if (revealed && card.image) {
+    return (
+      <div className="card-prompt">
+        <img
+          className="card-full"
+          src={card.image}
+          alt={card.name}
+          draggable={false}
+        />
+      </div>
+    );
+  }
+
   // Sagas use a different frame: their rules text lives in a left-hand column
   // that Scryfall's art_crop includes, which spoils the card. We crop to the
   // right portion of that image, which is just the art.

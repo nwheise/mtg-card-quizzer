@@ -60,11 +60,24 @@ body {
   border-bottom: 1px solid var(--border-soft);
 }
 
+.app-title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
 .app-header h1 {
   font-size: 1.45rem;
   font-weight: 700;
   letter-spacing: -0.01em;
   margin: 0;
+}
+
+.app-subtitle {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted);
 }
 
 .message {
@@ -235,6 +248,16 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 0.55rem;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+}
+
+/* Full card image shown after answering (replaces the framed prompt). */
+.card-full {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 488 / 680; /* Scryfall `normal` ratio */
+  border-radius: 4.75% / 3.5%; /* rounded corners of a real card */
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
 }
 

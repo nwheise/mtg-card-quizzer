@@ -168,7 +168,10 @@ export function App() {
   return (
     <main className="app">
       <header className="app-header">
-        <h1>MSH Card Quizzer</h1>
+        <div className="app-title">
+          <h1>Magic: The Gathering Card Quizzer</h1>
+          <p className="app-subtitle">Current set: Marvel Super Heroes (MSH)</p>
+        </div>
         <div className="header-right">
           <Scoreboard
             answered={score.answered}
@@ -180,7 +183,12 @@ export function App() {
         </div>
       </header>
 
-      <CardPrompt card={round.card} symbols={symbols} settings={settings} />
+      <CardPrompt
+        card={round.card}
+        symbols={symbols}
+        settings={settings}
+        revealed={pickedIndex !== null}
+      />
 
       <div className="play">
         <div className="play-bar">

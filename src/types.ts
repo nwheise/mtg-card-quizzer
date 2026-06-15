@@ -3,6 +3,9 @@ export interface QuizCard {
   id: string;
   name: string;
   artCrop: string;
+  // Full card image (Scryfall `normal`), shown after answering to review the
+  // whole card.
+  image: string;
   oracleText: string;
   typeLine: string;
   primaryType: string;

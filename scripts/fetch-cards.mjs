@@ -63,6 +63,9 @@ function normalize(card) {
   const artCrop =
     card.image_uris?.art_crop ?? faces[0]?.image_uris?.art_crop ?? null;
 
+  const image =
+    card.image_uris?.normal ?? faces[0]?.image_uris?.normal ?? null;
+
   const oracleText =
     card.oracle_text ??
     faces
@@ -76,6 +79,7 @@ function normalize(card) {
     id: card.id,
     name: card.name,
     artCrop,
+    image,
     oracleText: (oracleText ?? "").trim(),
     typeLine,
     primaryType: primaryType(typeLine),
@@ -100,6 +104,7 @@ function faceToQuiz(card, face, i) {
     id: `${card.id}-${i}`,
     name: face.name,
     artCrop: face.image_uris?.art_crop ?? null,
+    image: face.image_uris?.normal ?? null,
     oracleText: (face.oracle_text ?? "").trim(),
     typeLine: face.type_line ?? "",
     primaryType: primaryType(face.type_line ?? ""),
