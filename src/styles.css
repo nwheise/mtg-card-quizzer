@@ -251,6 +251,23 @@ body {
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
 }
 
+/* Power/toughness sits on the right below the other fields, like a real card's
+   P/T box — just the numbers, recalled rather than read off elsewhere. */
+.card-pt {
+  display: block;
+  width: fit-content;
+  margin: 0.5rem 0.1rem 0.1rem auto;
+  padding: 0.1rem 0.55rem;
+  background: linear-gradient(180deg, #2b3040 0%, #1d212c 100%);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
 /* Full card image shown after answering (replaces the framed prompt). The
    layered shadow gives a hairline light edge (so black-framed cards don't
    blend into the dark background), depth, and a faint accent glow to lift it. */

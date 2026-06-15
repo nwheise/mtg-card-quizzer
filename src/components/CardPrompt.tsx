@@ -44,11 +44,22 @@ export function CardPrompt({
   const showSubtype =
     settings.typeLine === "prompt" && FIELDS.typeLine.has(card);
 
-  // Parts shown as labeled rows beneath the type line. (Mana cost and the
-  // subtype get bespoke placement above, so they're excluded here.)
-  const infoFields = (
-    ["keywords", "powerToughness", "oracleText"] as FieldId[]
-  ).filter((id) => settings[id] === "prompt" && FIELDS[id].has(card));
+  // Power/toughness sits in the frame's bottom-right corner, like a real card.
+  const showPT =
+    settings.powerToughness === "prompt" && FIELDS.powerToughness.has(card);
+
+  const showOracle =
+    settings.oracleText === "prompt" && FIELDS.oracleText.has(card);
+
+  // Parts shown as labeled rows beneath the type line. (Mana cost, the subtype,
+  // and power/toughness get bespoke placement, so they're excluded here.)
+  // Oracle text already spells out the keywords, so when it's shown we drop the
+  // separate keywords row to avoid the redundancy.
+  const infoFields = (["keywords", "oracleText"] as FieldId[]).filter((id) => {
+    if (settings[id] !== "prompt" || !FIELDS[id].has(card)) return false;
+    if (id === "keywords" && showOracle) return false;
+    return true;
+  });
 
   return (
     <div className="card-prompt">
@@ -83,6 +94,10 @@ export function CardPrompt({
               </div>
             ))}
           </div>
+        )}
+
+        {showPT && (
+          <span className="card-pt">{FIELDS.powerToughness.value(card)}</span>
         )}
       </div>
     </div>
