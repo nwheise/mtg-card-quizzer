@@ -41,8 +41,6 @@ running dev server (e.g. with headless Chrome).
     field's role (`prompt`/`quiz`/`hidden`). Helpers pick the round's quiz field
     (`pickQuizField`, random among a card's *available* quiz fields) and filter
     the deck to `eligibleCards`. Always keeps ≥1 field set to quiz.
-  - `keywords.ts` — `deriveKeywords()` recovers ability keywords from oracle
-    text (fallback when cards.json lacks Scryfall's `keywords`; see below).
   - `progress.ts` — per-card weights + stats in `localStorage` (spaced
     repetition: a miss raises a card's weight, a correct answer lowers it).
   - `selectCard.ts` — weighted-random next-card pick, never repeats the previous.
@@ -73,10 +71,9 @@ running dev server (e.g. with headless Chrome).
 - **Distractors are same-type by design** (more confusable = better training).
   The prompt always shows `primaryType` to match; the type line's *subtypes* are
   the configurable `typeLine` field.
-- **Keywords** aren't stored in older `cards.json`. `fetch-cards.mjs` now records
-  Scryfall's `keywords`, but `loadCards.ts` falls back to `deriveKeywords()` when
-  the field is absent — so the feature works before a re-fetch. Re-running
-  `npm run fetch` (needs `api.scryfall.com` reachable) populates the real field.
+- **Keywords** come from Scryfall's `keywords` field, recorded by
+  `fetch-cards.mjs` into `cards.json` (so `npm run fetch` must have run against a
+  reachable `api.scryfall.com` for the keywords field to be populated).
 - Regenerating data is safe and idempotent: `npm run fetch`. The set releases
   2026-06-26, so re-fetch to pick up Scryfall updates.
 

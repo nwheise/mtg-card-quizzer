@@ -1,6 +1,4 @@
-// A single quizzable card, as produced by scripts/fetch-cards.mjs. `keywords`
-// is not stored in cards.json — it's derived from the oracle text at load time
-// (see data/loadCards.ts), so it's always present on an in-app card.
+// A single quizzable card, as produced by scripts/fetch-cards.mjs.
 export interface QuizCard {
   id: string;
   name: string;

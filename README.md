@@ -37,5 +37,6 @@ npm run dev     # start the dev server
 npm run build   # type-check + production build into dist/
 ```
 
-`npm run fetch` pulls the set from Scryfall; re-run it to pick up data/art
-updates (the set releases 2026-06-26, so details may still change).
+`npm run fetch` pulls the set from Scryfall (including each card's keywords);
+re-run it to pick up data/art updates (the set releases 2026-06-26, so details
+may still change).
