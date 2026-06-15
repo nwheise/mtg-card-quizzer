@@ -183,18 +183,11 @@ export function App() {
       <CardPrompt card={round.card} symbols={symbols} settings={settings} />
 
       <div className="play">
-        <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
-          {feedback ?? question}
-        </p>
+        <div className="play-bar">
+          <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
+            {feedback ?? question}
+          </p>
 
-        <OptionsGrid
-          round={round}
-          symbols={symbols}
-          pickedIndex={pickedIndex}
-          onPick={handlePick}
-        />
-
-        <div className="controls">
           <button
             type="button"
             className="next-button"
@@ -204,6 +197,13 @@ export function App() {
             Next card →
           </button>
         </div>
+
+        <OptionsGrid
+          round={round}
+          symbols={symbols}
+          pickedIndex={pickedIndex}
+          onPick={handlePick}
+        />
       </div>
     </main>
   );

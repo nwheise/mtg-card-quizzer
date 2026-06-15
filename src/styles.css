@@ -82,7 +82,7 @@ body {
 
 .header-right {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 0.85rem;
 }
 
@@ -95,19 +95,27 @@ body {
 /* Customization gear + popover */
 .settings {
   position: relative;
+  display: flex;
 }
 
 .settings-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
   background: var(--bg-2);
   color: var(--text);
   border: 1px solid var(--border-soft);
   border-radius: 10px;
-  padding: 0.55rem 0.8rem;
-  font-size: 0.85rem;
-  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.settings-icon {
+  display: block;
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .settings-toggle:hover,
@@ -326,6 +334,7 @@ body {
 
 /* Feedback line */
 .feedback {
+  flex: 1;
   text-align: center;
   min-height: 1.4em;
   margin: 0;
@@ -379,8 +388,10 @@ body {
 }
 
 /* Short answers (mana cost, power/toughness, keywords, type line) read better a
-   touch larger than dense oracle text. */
+   touch larger than dense oracle text. They also flow inline — the oracle-text
+   column layout would stack a mana cost's symbols vertically. */
 .option--short .option-text {
+  display: block;
   font-size: 1.2rem;
   font-weight: 600;
 }
@@ -482,14 +493,17 @@ body {
   margin: 0 0.05em;
 }
 
-/* Controls */
-.controls {
+/* Question/feedback line with the Next button pinned to the right, so the
+   button keeps a fixed spot instead of riding the bottom of the options. */
+.play-bar {
   display: flex;
-  justify-content: center;
-  margin-top: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 .next-button {
+  flex: none;
   background: var(--accent);
   color: var(--accent-ink);
   border: none;
@@ -497,6 +511,7 @@ body {
   padding: 0.75rem 1.8rem;
   font-size: 1rem;
   font-weight: 700;
+  white-space: nowrap;
   cursor: pointer;
   transition: filter 0.12s ease, transform 0.06s ease;
 }
@@ -519,7 +534,7 @@ body {
   .card-prompt {
     margin-bottom: 1.25rem;
   }
-  .feedback {
+  .play-bar {
     margin-bottom: 1rem;
   }
   .options-grid {
@@ -556,10 +571,6 @@ body {
   }
   .feedback {
     text-align: left;
-  }
-  .controls {
-    justify-content: flex-start;
-    margin-top: 0;
   }
   /* Two wide, comfortably readable columns for the 6 options. */
   .options-grid {
