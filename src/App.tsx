@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { QuizCard, Round, SymbolMap } from "./types.ts";
 import { loadGameData } from "./data/loadCards.ts";
 import { buildRound } from "./game/buildOptions.ts";
@@ -40,6 +40,7 @@ export function App() {
   const [round, setRound] = useState<Round | null>(null);
   const [pickedIndex, setPickedIndex] = useState<number | null>(null);
   const [score, setScore] = useState<SessionScore>(ZERO_SCORE);
+  const headerRef = useRef<HTMLElement>(null);
 
   // Load card + symbol data once.
   useEffect(() => {
@@ -97,6 +98,15 @@ export function App() {
       );
       setProgress(updated);
       saveProgress(updated);
+
+      // On narrow screens the options sit below the fold, so after answering
+      // scroll back up to reveal the full card. Stop at the divider line under
+      // the header rather than the very top, so the card lands just below it.
+      const header = headerRef.current;
+      if (header && window.matchMedia("(max-width: 899px)").matches) {
+        const top = header.getBoundingClientRect().bottom + window.scrollY - 12;
+        window.scrollTo({ top: Math.max(top, 0), behavior: "smooth" });
+      }
     },
     [round, pickedIndex, score, progress],
   );
@@ -167,7 +177,7 @@ export function App() {
 
   return (
     <main className="app">
-      <header className="app-header">
+      <header className="app-header" ref={headerRef}>
         <div className="app-title">
           <h1>Magic: The Gathering Card Quizzer</h1>
           <p className="app-subtitle">Current set: Marvel Super Heroes (MSH)</p>
