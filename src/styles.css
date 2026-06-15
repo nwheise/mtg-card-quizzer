@@ -251,14 +251,19 @@ body {
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
 }
 
-/* Full card image shown after answering (replaces the framed prompt). */
+/* Full card image shown after answering (replaces the framed prompt). The
+   layered shadow gives a hairline light edge (so black-framed cards don't
+   blend into the dark background), depth, and a faint accent glow to lift it. */
 .card-full {
   display: block;
   width: 100%;
   max-width: 440px;
   aspect-ratio: 488 / 680; /* Scryfall `normal` ratio */
   border-radius: 4.75% / 3.5%; /* rounded corners of a real card */
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 18px 50px rgba(0, 0, 0, 0.55),
+    0 0 36px rgba(124, 156, 255, 0.18);
 }
 
 .card-titlebar {
