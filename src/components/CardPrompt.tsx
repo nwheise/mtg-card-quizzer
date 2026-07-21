@@ -1,7 +1,8 @@
+import type { CSSProperties } from "react";
 import type { FieldId, QuizCard, SymbolMap } from "../types.ts";
 import type { Settings } from "../game/settings.ts";
 import { FIELDS } from "../game/fields.ts";
-import { frameFor } from "../game/frame.ts";
+import type { FrameId } from "../game/frame.ts";
 import { SymbolText } from "./SymbolText.tsx";
 import { FieldValue } from "./FieldValue.tsx";
 
@@ -13,12 +14,16 @@ import { FieldValue } from "./FieldValue.tsx";
 export function CardPrompt({
   card,
   quizField,
+  frame,
+  setIcon,
   symbols,
   settings,
   revealed,
 }: {
   card: QuizCard;
   quizField: FieldId;
+  frame: FrameId;
+  setIcon?: string;
   symbols: SymbolMap;
   settings: Settings;
   revealed: boolean;
@@ -53,11 +58,6 @@ export function CardPrompt({
 
   const showOracle =
     settings.oracleText === "prompt" && FIELDS.oracleText.has(card);
-
-  // The frame wears the card's colour — but that colour is exactly what a
-  // quizzed mana cost is asking for, so fall back to the neutral plate whenever
-  // the cost isn't already on show.
-  const frame = showCost ? frameFor(card) : "neutral";
 
   // Parts shown in the text box. (Mana cost, the subtype, and power/toughness
   // get bespoke placement, so they're excluded here.) Oracle text already
@@ -96,11 +96,22 @@ export function CardPrompt({
               {card.primaryType}
               {showSubtype && ` — ${FIELDS.typeLine.value(card)}`}
             </span>
-            {/* Stands in for the set symbol a real card carries at the right
-                end of its type line, coloured by rarity. */}
+            {/* The set symbol a real card carries at the right end of its type
+                line, coloured by rarity. Masks the set's monochrome SVG so any
+                set's glyph takes the rarity colour; falls back to a plain
+                rarity lozenge if the icon URL is missing. */}
             <span
-              className={`rarity-pip rarity--${card.rarity}`}
-              title={card.rarity}
+              className={`rarity-pip rarity--${card.rarity}${
+                setIcon ? " rarity-pip--icon" : ""
+              }`}
+              style={
+                setIcon
+                  ? ({
+                      "--set-icon": `url("${setIcon}")`,
+                    } as CSSProperties)
+                  : undefined
+              }
+              title={`${card.rarity}${setIcon ? ` · ${card.set.toUpperCase()}` : ""}`}
               aria-label={`${card.rarity} rarity`}
             />
           </div>

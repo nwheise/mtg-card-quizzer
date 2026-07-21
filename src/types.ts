@@ -30,6 +30,10 @@ export interface SetInfo {
   name: string;
   released: string;
   count: number;
+  // The set's symbol as a monochrome SVG url (Scryfall `icon_svg_uri`), masked
+  // with a rarity colour to stand in for the printed set symbol. Optional so
+  // older sets.json files without it still load.
+  icon?: string;
 }
 
 // The parts of a card the player can independently route (see game/fields.ts).

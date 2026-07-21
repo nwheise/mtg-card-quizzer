@@ -61,8 +61,11 @@ running dev server (e.g. with headless Chrome).
     here.
   - `formatText.ts` — `cleanOracle()` strips reminder text and tidies whitespace.
   - `frame.ts` — `frameFor()` maps a card to its printed frame colour
-    (`w`/`u`/`b`/`r`/`g`/`gold`/`artifact`/`land`), which drives the prompt's
-    frame styling.
+    (`w`/`u`/`b`/`r`/`g`/`gold`/`artifact`/`land`); `promptFrame(card, settings)`
+    is the one to call — it returns `neutral` instead whenever showing the
+    colour would spoil a quizzed mana cost. Drives both the prompt frame and the
+    answer-box tint (see Look and feel below). `App` computes it once and passes
+    it to `CardPrompt` and `OptionsGrid`.
 - **UI** (`src/components/`): `CardPrompt` (renders the prompt-role parts),
   `OptionsGrid` → `OptionCard` → `FieldValue` (dispatches per field to
   `OracleText` — cleaning, ability-word emphasis, name redaction, symbols — or
@@ -73,8 +76,13 @@ running dev server (e.g. with headless Chrome).
   prompt is a real card frame (`.card` → `.card-plate` → title bar / art window
   / type bar / parchment text box, plus a P/T box on the corner), coloured by
   `frameFor()` via the `--f1`/`--f2`/`--f-ink`/`--f-box` custom properties on
-  `.frame--*`. Options are parchment text boxes, so answers read like rules
-  text. Type is Cinzel (engraved names/labels) + Spectral (rules text), loaded
+  `.frame--*`. The **answer boxes share that colour**: `OptionsGrid` gets the
+  same `frame--*` class, and `.option`'s parchment is mixed from `--f-box`, so a
+  blue card's answers sit on pale-blue stock like the card's own text box does.
+  The type bar ends in the **set symbol** — `SetInfo.icon` (Scryfall
+  `icon_svg_uri`, in `sets.json`) masked with a rarity-coloured gradient
+  (`.rarity-pip--icon`); it falls back to a plain rarity lozenge if the icon URL
+  is missing. Type is Cinzel (engraved names/labels) + Spectral (rules text), loaded
   from Google Fonts in `index.html` with a system-serif fallback. Keep new
   chrome warm (bronze/gold on near-black) rather than the neutral greys of a
   default dark theme.
@@ -92,10 +100,10 @@ running dev server (e.g. with headless Chrome).
 - **Self-name redaction** lives in `OracleText.tsx`: a card's own name (full +
   pre-comma short name, per face) is blacked out so the text can't spoil the
   answer. Case-sensitive, whole-word, no lookbehind (older-Safari safe).
-- **The frame colour is a spoiler.** `CardPrompt` only tints the frame with the
-  card's real colour when the mana cost is already routed to the prompt;
-  otherwise it uses the neutral plate, so a quizzed mana cost isn't given away
-  by the frame around the art.
+- **The frame colour is a spoiler.** `promptFrame()` only tints the frame (and
+  the answer boxes) with the card's real colour when the mana cost is already
+  routed to the prompt; otherwise it returns `neutral`, so a quizzed mana cost
+  isn't given away by the colour around the art or under the options.
 - **Distractors are same-set and same-type by design** (more confusable = better
   training). The prompt always shows `primaryType` to match; the type line's
   *subtypes* are the configurable `typeLine` field.

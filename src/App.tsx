@@ -20,6 +20,7 @@ import {
   type Settings,
 } from "./game/settings.ts";
 import { FIELDS } from "./game/fields.ts";
+import { promptFrame } from "./game/frame.ts";
 import { CardPrompt } from "./components/CardPrompt.tsx";
 import { OptionsGrid } from "./components/OptionsGrid.tsx";
 import { Scoreboard } from "./components/Scoreboard.tsx";
@@ -180,6 +181,13 @@ export function App() {
     ? `Which ${FIELDS[round.quizField].noun} belongs to this card?`
     : "";
 
+  // The prompt card's frame colour, shared by the card and the answer boxes.
+  const frame = round ? promptFrame(round.card, settings) : "neutral";
+  // The card's set symbol, stamped on the type bar and coloured by rarity.
+  const setIcon = round
+    ? sets.find((s) => s.code === round.card.set)?.icon
+    : undefined;
+
   if (error) {
     return (
       <main className="app">
@@ -249,6 +257,8 @@ export function App() {
             <CardPrompt
               card={round.card}
               quizField={round.quizField}
+              frame={frame}
+              setIcon={setIcon}
               symbols={symbols}
               settings={settings}
               revealed={pickedIndex !== null}
@@ -272,6 +282,7 @@ export function App() {
 
               <OptionsGrid
                 round={round}
+                frame={frame}
                 symbols={symbols}
                 pickedIndex={pickedIndex}
                 onPick={handlePick}

@@ -1,7 +1,7 @@
 // Downloads one or more MTG sets from Scryfall and writes a normalized, trimmed
 // dataset the static app can load directly:
 //   public/cards.json    - one entry per quizzable card, each tagged with `set`
-//   public/sets.json     - [{ code, name, released, count }] set manifest
+//   public/sets.json     - [{ code, name, released, count, icon }] set manifest
 //   public/symbols.json  - { "{R}": "<svg url>", ... } for rendering mana symbols
 //
 // Scryfall asks API consumers to identify themselves and to cache results rather
@@ -164,7 +164,13 @@ function fetchSetInfo(code) {
   if (data.object === "error") {
     throw new Error(`Scryfall error for set ${code}: ${data.details}`);
   }
-  return { name: data.name, released: data.released_at ?? "" };
+  // `icon_svg_uri` is the set's symbol as a monochrome SVG; the app masks it
+  // with a rarity colour to stand in for the printed set symbol.
+  return {
+    name: data.name,
+    released: data.released_at ?? "",
+    icon: data.icon_svg_uri ?? "",
+  };
 }
 
 // A card whose entire oracle text is reminder text (parentheticals) — e.g. a
@@ -205,6 +211,7 @@ async function main() {
       name: info.name,
       released: info.released,
       count: kept.length,
+      icon: info.icon,
     });
     console.log(
       `  ${code}: kept ${kept.length} quiz cards from ${raw.length} Scryfall cards ` +
