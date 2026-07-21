@@ -96,6 +96,13 @@ export function CardPrompt({
               {card.primaryType}
               {showSubtype && ` — ${FIELDS.typeLine.value(card)}`}
             </span>
+            {/* Stands in for the set symbol a real card carries at the right
+                end of its type line, coloured by rarity. */}
+            <span
+              className={`rarity-pip rarity--${card.rarity}`}
+              title={card.rarity}
+              aria-label={`${card.rarity} rarity`}
+            />
           </div>
 
           {/* Always rendered, even when nothing is routed here — a card without
