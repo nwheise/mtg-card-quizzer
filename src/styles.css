@@ -1,21 +1,50 @@
+/* ---------------------------------------------------------------------------
+   Magic-flavoured theme.
+
+   The page is meant to read like a card laid out on a dark table: warm blacks
+   and bronze for the chrome, a real card frame for the prompt, and parchment
+   "text boxes" for the answers — the same shape a player reads a card's rules
+   text out of. Colour tokens are warm (never the cool blue-grey of a generic
+   dark UI), and the two type families stand in for Magic's own: Cinzel for
+   engraved names/labels, Spectral for rules text.
+   --------------------------------------------------------------------------- */
+
 :root {
-  --bg: #0e1016;
-  --bg-2: #131620;
-  --panel: #1b1f2b;
-  --panel-hover: #232838;
-  --border: #2c3146;
-  --border-soft: #232838;
-  --text: #eceef5;
-  --muted: #9aa0b6;
-  --accent: #7c9cff;
-  --accent-ink: #0a0d18;
-  --correct: #38c172;
-  --correct-bg: #16331f;
-  --wrong: #ef5350;
-  --wrong-bg: #361717;
-  --missed: #e0a93f;
-  --missed-bg: #33280f;
-  --radius: 14px;
+  /* Table + chrome */
+  --bg: #0b0a09;
+  --bg-2: #151210;
+  --panel: #1c1815;
+  --panel-hover: #262019;
+  --border: #3a3128;
+  --border-soft: #2a231d;
+
+  /* Ink on dark */
+  --text: #ece3d2;
+  --muted: #a2917a;
+
+  /* Bronze / gold — the accent metal of the card frames and chrome */
+  --gold: #c9a227;
+  --gold-bright: #e8cf8a;
+  --gold-deep: #6d5518;
+  --accent-ink: #241a05;
+
+  /* Parchment — the answer text boxes */
+  --parchment-1: #f7f0da;
+  --parchment-2: #e6dabb;
+  --parchment-ink: #1b1509;
+  --parchment-edge: #14110c;
+
+  --correct: #4f7f34;
+  --wrong: #97331f;
+  --missed: #a8842f;
+
+  --radius: 12px;
+
+  --font-display: "Cinzel", "Trajan Pro", "Palatino Linotype", Palatino,
+    Georgia, serif;
+  --font-card: "Spectral", "Palatino Linotype", Palatino, Georgia,
+    "Times New Roman", serif;
+
   color-scheme: dark;
 }
 
@@ -29,20 +58,45 @@ body {
 }
 
 body {
-  background: radial-gradient(
-      1200px 700px at 80% -10%,
-      #1a2030 0%,
-      transparent 60%
-    ),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
-  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-card);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
+/* The current card's art, blown up and blurred behind everything — the room
+   takes on the colour of whatever you're being quizzed on. */
+.backdrop {
+  position: fixed;
+  inset: -8vmax;
+  z-index: -2;
+  background-position: center 35%;
+  background-size: cover;
+  filter: blur(55px) saturate(1.5) brightness(0.75);
+  opacity: 0.7;
+  transition: opacity 0.6s ease;
+}
+
+/* Vignette + floor gradient over the blurred art, so text stays readable. */
+.backdrop-veil {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+      120% 90% at 50% 0%,
+      rgba(11, 10, 9, 0.35) 0%,
+      rgba(11, 10, 9, 0.75) 55%,
+      rgba(11, 10, 9, 0.96) 100%
+    ),
+    /* A faint grain over everything, so the dark areas read as felt rather
+       than as flat #000. */
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+}
+
 .app {
+  position: relative;
   max-width: 1160px;
   margin: 0 auto;
   padding: 1.5rem 1.5rem 3.5rem;
@@ -57,26 +111,44 @@ body {
   gap: 1rem;
   padding-bottom: 1.25rem;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--border-soft);
+  /* A thin bronze rule, brightest in the middle — like a card's border trim. */
+  border-bottom: 1px solid transparent;
+  border-image: linear-gradient(
+      90deg,
+      transparent,
+      var(--gold-deep) 20%,
+      var(--gold) 50%,
+      var(--gold-deep) 80%,
+      transparent
+    )
+    1;
 }
 
 .app-title {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
 }
 
 .app-header h1 {
-  font-size: 1.45rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
   margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #f6e6b6 0%, var(--gold) 60%, #8a6c1d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .app-subtitle {
   margin: 0;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--muted);
 }
 
@@ -105,6 +177,35 @@ body {
   gap: 0.5rem;
 }
 
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, var(--panel) 0%, #120f0c 100%);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(232, 207, 138, 0.12);
+  padding: 0.4rem 0.85rem;
+  min-width: 66px;
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold-bright);
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--muted);
+}
+
 /* Customization gear + popover */
 .settings {
   position: relative;
@@ -116,10 +217,11 @@ body {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
-  background: var(--bg-2);
-  color: var(--text);
+  background: linear-gradient(180deg, var(--panel) 0%, #120f0c 100%);
+  color: var(--gold-bright);
   border: 1px solid var(--border-soft);
-  border-radius: 10px;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 0 rgba(232, 207, 138, 0.12);
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.12s ease, border-color 0.12s ease;
@@ -134,7 +236,7 @@ body {
 .settings-toggle:hover,
 .settings-toggle[aria-expanded="true"] {
   background: var(--panel-hover);
-  border-color: var(--accent);
+  border-color: var(--gold);
 }
 
 .settings-panel {
@@ -143,27 +245,29 @@ body {
   right: 0;
   z-index: 20;
   width: min(320px, 90vw);
-  background: var(--panel);
+  background: linear-gradient(180deg, #221c17 0%, #14110e 100%);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   padding: 0.85rem;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 rgba(232, 207, 138, 0.14);
 }
 
 .settings-hint {
   margin: 0 0 0.7rem;
-  font-size: 0.78rem;
-  line-height: 1.4;
+  font-size: 0.8rem;
+  line-height: 1.45;
   color: var(--muted);
 }
 
 .settings-section-label {
   margin: 0 0 0.35rem;
+  font-family: var(--font-display);
   font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--gold);
 }
 
 .settings-section-label--spaced {
@@ -178,14 +282,14 @@ body {
   gap: 0.55rem;
   padding: 0.32rem 0;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
 }
 
 .settings-set-row input {
   flex-shrink: 0;
   width: 15px;
   height: 15px;
-  accent-color: var(--accent);
+  accent-color: var(--gold);
   cursor: pointer;
 }
 
@@ -218,16 +322,16 @@ body {
 }
 
 .settings-row-label {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 600;
 }
 
 .role-toggle {
   display: inline-flex;
   flex-shrink: 0;
-  background: var(--bg-2);
+  background: #0f0d0b;
   border: 1px solid var(--border-soft);
-  border-radius: 8px;
+  border-radius: 7px;
   padding: 2px;
   gap: 2px;
 }
@@ -236,10 +340,13 @@ body {
   background: transparent;
   color: var(--muted);
   border: none;
-  border-radius: 6px;
+  border-radius: 5px;
   padding: 0.25rem 0.5rem;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
   transition: background 0.12s ease, color 0.12s ease;
 }
@@ -249,7 +356,7 @@ body {
 }
 
 .role-btn--active {
-  background: var(--accent);
+  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
   color: var(--accent-ink);
 }
 
@@ -258,92 +365,141 @@ body {
   cursor: default;
 }
 
-.stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  background: var(--bg-2);
-  border: 1px solid var(--border-soft);
-  border-radius: 10px;
-  padding: 0.4rem 0.85rem;
-  min-width: 66px;
-}
+/* ---------------------------------------------------------------------------
+   The card prompt — an actual Magic frame: black border, coloured plate,
+   engraved title/type bars, an inset art window, and a P/T box hanging off the
+   bottom-right corner.
+   --------------------------------------------------------------------------- */
 
-.stat-value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.stat-label {
-  font-size: 0.66rem;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
-}
-
-/* Card prompt — echoes the top of a real Magic card: title bar above the art */
 .card-prompt {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.card-frame {
+/* Frame colours: --f1/--f2 are the plate gradient, --f-ink the engraved text,
+   --f-box the parchment tint of the text box (each printed colour tints its
+   text box slightly). The defaults here are the neutral plate used whenever
+   showing the card's real colour would give a quizzed mana cost away. */
+.card,
+.frame--neutral {
+  --f1: #9aa3ac;
+  --f2: #4d565f;
+  --f-ink: #f2ede2;
+  --f-box: #ebe6d8;
+}
+
+.frame--w {
+  --f1: #fdfbf1;
+  --f2: #d8cfb2;
+  --f-ink: #241f14;
+  --f-box: #f7f2e0;
+}
+.frame--u {
+  --f1: #56a0d3;
+  --f2: #14496f;
+  --f-ink: #f0f7ff;
+  --f-box: #e4edf3;
+}
+.frame--b {
+  --f1: #55535c;
+  --f2: #16151a;
+  --f-ink: #e9e6ef;
+  --f-box: #e2dfe2;
+}
+.frame--r {
+  --f1: #e07a54;
+  --f2: #85261a;
+  --f-ink: #fff2ec;
+  --f-box: #f4e3d9;
+}
+.frame--g {
+  --f1: #57a06a;
+  --f2: #1a4a2a;
+  --f-ink: #f0fbf1;
+  --f-box: #e4ecdc;
+}
+.frame--gold {
+  --f1: #eed890;
+  --f2: #a5802b;
+  --f-ink: #2b2003;
+  --f-box: #f5ecd2;
+}
+.frame--artifact {
+  --f1: #a7b0b8;
+  --f2: #495159;
+  --f-ink: #f4f7fa;
+  --f-box: #e8ebee;
+}
+.frame--land {
+  --f1: #c09a6c;
+  --f2: #5a4023;
+  --f-ink: #fdf4e6;
+  --f-box: #ece0cb;
+}
+
+.card {
+  position: relative;
   width: 100%;
   max-width: 440px;
-  background: linear-gradient(180deg, #20242f 0%, #171a23 100%);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 0.55rem;
-  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
+  /* Hold a real card's silhouette even when little is routed to the prompt.
+     The text box takes up the slack (and scrolls if a long oracle text needs
+     more room), so the frame never looks stubby. */
+  aspect-ratio: 488 / 680;
+  /* The black card stock the frame is printed on. */
+  background: linear-gradient(160deg, #141210 0%, #050505 100%);
+  border-radius: 4.75% / 3.5%;
+  padding: 3.2%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 22px 55px rgba(0, 0, 0, 0.7), 0 0 40px rgba(0, 0, 0, 0.4);
 }
 
-/* Power/toughness sits on the right below the other fields, like a real card's
-   P/T box — just the numbers, recalled rather than read off elsewhere. */
-.card-pt {
-  display: block;
-  width: fit-content;
-  margin: 0.5rem 0.1rem 0.1rem auto;
-  padding: 0.1rem 0.55rem;
-  background: linear-gradient(180deg, #2b3040 0%, #1d212c 100%);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
-  font-size: 1.15rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-}
-
-/* Full card image shown after answering (replaces the framed prompt). The
-   layered shadow gives a hairline light edge (so black-framed cards don't
-   blend into the dark background), depth, and a faint accent glow to lift it. */
-.card-full {
-  display: block;
-  width: 100%;
-  max-width: 440px;
-  aspect-ratio: 488 / 680; /* Scryfall `normal` ratio */
-  border-radius: 4.75% / 3.5%; /* rounded corners of a real card */
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.12),
-    0 18px 50px rgba(0, 0, 0, 0.55),
-    0 0 36px rgba(124, 156, 255, 0.18);
-}
-
-.card-titlebar {
+.card-plate {
   display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.45rem;
+  padding: 0.45rem;
+  border-radius: 2.5% / 1.8%;
+  background: linear-gradient(155deg, var(--f1) 0%, var(--f2) 55%, var(--f1) 130%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+/* Title and type bars: the beveled plaques a real frame stamps its name and
+   type line into. */
+.card-bar {
+  display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
-  padding: 0.15rem 0.45rem 0.55rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 7px;
+  color: var(--f-ink);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34) 0%,
+    rgba(255, 255, 255, 0.06) 45%,
+    rgba(0, 0, 0, 0.22) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+}
+
+/* Light frames (white, gold, artifact) carry dark engraved text, so the drop
+   shadow under it has to lighten instead. */
+.frame--w .card-bar,
+.frame--gold .card-bar {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .card-title-name {
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+  font-size: 1.08rem;
+  line-height: 1.25;
+  letter-spacing: 0.005em;
 }
 
 .card-title-cost {
@@ -354,7 +510,24 @@ body {
 .card-title-cost .mana-symbol {
   height: 1.05rem;
   width: 1.05rem;
-  vertical-align: -0.16rem;
+  vertical-align: -0.18rem;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+}
+
+.card-typeline {
+  font-size: 0.92rem;
+  letter-spacing: 0.02em;
+}
+
+/* Art window, inset into the plate the way a printed card's art is. */
+.card-artwindow {
+  position: relative;
+  flex: none;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55),
+    0 1px 0 rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+  background: #000;
 }
 
 .card-art {
@@ -362,45 +535,52 @@ body {
   width: 100%;
   aspect-ratio: 626 / 457; /* Scryfall art_crop ratio */
   object-fit: cover;
-  border-radius: calc(var(--radius) - 5px);
-  border: 1px solid rgba(0, 0, 0, 0.45);
 }
 
 /* Sagas: crop to the right ~46% of the art_crop, which is just the art (the
    left column is the spoiler rules text). Portrait, centered in the frame. */
+.card-artwindow--saga {
+  width: fit-content;
+  margin-inline: auto;
+}
+
 .card-art--saga {
   width: auto;
   height: clamp(240px, 48vh, 360px);
   aspect-ratio: 5 / 8;
-  margin-inline: auto;
   object-position: right center;
 }
 
-/* Type line beneath the art, echoing a real card. The primary type is always
-   shown (it matches the options, which are all the same type); the subtypes are
-   appended only when the player routes the type line to the prompt. */
-.card-typeline {
-  margin-top: 0.5rem;
-  padding: 0.32rem 0.6rem;
-  background: linear-gradient(180deg, #20242f 0%, #171a23 100%);
-  border: 1px solid rgba(0, 0, 0, 0.4);
-  border-radius: calc(var(--radius) - 5px);
-  font-size: 0.95rem;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-/* Extra card parts the player has routed to the prompt (keywords, P/T, oracle
-   text), as labeled rows beneath the type line. */
-.card-prompt-info {
+/* The rules text box — parchment, like the real card. Holds whichever parts
+   the player routed to the prompt. */
+.card-textbox {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
-  margin-top: 0.5rem;
-  padding: 0.45rem 0.6rem;
-  background: var(--bg-2);
-  border: 1px solid var(--border-soft);
-  border-radius: calc(var(--radius) - 5px);
+  gap: 0.5rem;
+  /* Takes up whatever height the frame has left, and scrolls rather than
+     stretching the card when a long oracle text is in the prompt. */
+  flex: 1;
+  min-height: 3.5rem;
+  overflow-y: auto;
+  padding: 0.5rem 0.65rem;
+  border-radius: 4px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--f-box) 92%, #fff) 0%,
+    color-mix(in srgb, var(--f-box) 88%, #6b5a3c) 100%
+  );
+  color: var(--parchment-ink);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4),
+    inset 0 1px 6px rgba(107, 90, 60, 0.28);
+}
+
+/* Stands in for the missing rules text, set like a card's flavour text. */
+.textbox-placeholder {
+  margin: auto 0;
+  text-align: center;
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(60, 46, 20, 0.55);
 }
 
 .prompt-field {
@@ -410,10 +590,12 @@ body {
 }
 
 .prompt-field-label {
-  font-size: 0.62rem;
+  font-family: var(--font-display);
+  font-size: 0.6rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--muted);
+  letter-spacing: 0.1em;
+  color: #7a6440;
 }
 
 .prompt-field-value {
@@ -421,87 +603,118 @@ body {
   line-height: 1.45;
 }
 
+/* One ability per line, spaced the way a printed text box spaces them. */
 .prompt-field-value .oracle-line {
   display: block;
 }
 
-/* Feedback line */
-.feedback {
-  flex: 1;
-  text-align: center;
-  min-height: 1.4em;
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--muted);
+.prompt-field-value .oracle-line + .oracle-line {
+  margin-top: 0.4rem;
 }
 
-.feedback--ok {
-  color: var(--correct);
+/* Power/toughness box, hanging off the bottom-right corner of the frame. */
+.card-pt {
+  position: absolute;
+  right: 4.5%;
+  bottom: 1.6%;
+  padding: 0.06rem 0.7rem;
+  border-radius: 6px / 8px;
+  background: linear-gradient(160deg, var(--f1) 0%, var(--f2) 120%);
+  color: var(--f-ink);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.55);
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
 }
 
-.feedback--bad {
-  color: var(--wrong);
+/* Full card image shown after answering (replaces the framed prompt). */
+.card-full {
+  display: block;
+  width: 100%;
+  max-width: 440px;
+  aspect-ratio: 488 / 680; /* Scryfall `normal` ratio */
+  border-radius: 4.75% / 3.5%;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 22px 55px rgba(0, 0, 0, 0.7), 0 0 44px rgba(201, 162, 39, 0.16);
 }
 
-/* Options grid — 6 options, fully readable */
+/* ---------------------------------------------------------------------------
+   Options — each one is a card's text box, cut out and laid on the table.
+   --------------------------------------------------------------------------- */
+
 .options-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.7rem;
+  gap: 0.8rem;
 }
 
 .option {
   position: relative;
-  display: block;
+  /* Flex column rather than a block: a <button> vertically centres its content,
+     which left short answers floating mid-tile next to their number stamp. */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 100%;
   text-align: left;
-  background: var(--panel);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 0.9rem 1rem 1rem 2.85rem;
-  font-size: 0.95rem;
-  line-height: 1.5;
+  background: linear-gradient(180deg, var(--parchment-1) 0%, var(--parchment-2) 100%);
+  color: var(--parchment-ink);
+  border: 3px solid var(--parchment-edge);
+  border-radius: 9px;
+  padding: 0.85rem 0.95rem 0.9rem 2.6rem;
+  font-family: var(--font-card);
+  font-size: 0.97rem;
+  line-height: 1.45;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease,
-    transform 0.06s ease, box-shadow 0.12s ease;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28),
+    inset 0 2px 10px rgba(120, 100, 65, 0.22), 0 6px 14px rgba(0, 0, 0, 0.45);
+  transition: transform 0.08s ease, box-shadow 0.14s ease, border-color 0.14s ease;
 }
 
 /* Each ability on its own line, with a little breathing room between them. */
 .option-text {
   display: flex;
   flex-direction: column;
-  gap: 0.3rem;
+  gap: 0.32rem;
 }
 
 .ability-word {
   font-style: italic;
-  color: var(--muted);
   font-weight: 600;
+  color: #5c4a25;
 }
 
 /* Short answers (mana cost, power/toughness, keywords, type line) read better a
    touch larger than dense oracle text. They also flow inline — the oracle-text
    column layout would stack a mana cost's symbols vertically. */
+.option--short {
+  justify-content: center;
+  min-height: 3.4rem;
+  padding: 0.85rem 0.95rem 0.9rem 2.6rem;
+}
+
 .option--short .option-text {
   display: block;
-  font-size: 1.2rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
   font-weight: 600;
 }
 
-.option--short .card-title-cost .mana-symbol,
 .option--short .mana-symbol {
-  height: 1.1rem;
-  width: 1.1rem;
-  vertical-align: -0.18rem;
+  height: 1.15rem;
+  width: 1.15rem;
+  vertical-align: -0.2rem;
 }
 
 /* The card's own name, blacked out so it doesn't spoil the answer. The real
    text is kept (transparent) so the bar matches the name's width exactly. */
 .redacted {
   color: transparent;
-  background: #4a5169;
-  border-radius: 3px;
+  background: #2c2418;
+  border-radius: 2px;
   padding: 0 0.18em;
   margin: 0 0.02em;
   white-space: nowrap;
@@ -511,14 +724,15 @@ body {
 /* Divider between the two faces of a double-faced card. */
 .oracle-divider {
   height: 1px;
-  margin: 0.15rem 0;
-  background: var(--border);
+  margin: 0.2rem 0;
+  background: rgba(70, 56, 30, 0.35);
 }
 
 .option:hover:not(:disabled) {
-  background: var(--panel-hover);
-  border-color: var(--accent);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  border-color: var(--gold-deep);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28),
+    inset 0 2px 10px rgba(120, 100, 65, 0.22), 0 8px 20px rgba(0, 0, 0, 0.5),
+    0 0 0 2px rgba(201, 162, 39, 0.55);
 }
 
 .option:active:not(:disabled) {
@@ -529,54 +743,55 @@ body {
   cursor: default;
 }
 
+/* The pick-me number, stamped like a bronze seal on the box's edge. */
 .option-key {
   position: absolute;
-  top: 0.9rem;
-  left: 0.75rem;
+  top: 0.72rem;
+  left: 0.6rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 6px;
-  background: var(--bg-2);
-  border: 1px solid var(--border-soft);
-  font-size: 0.72rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #6b5a34 0%, #241d10 75%);
+  box-shadow: inset 0 1px 0 rgba(232, 207, 138, 0.45),
+    0 1px 2px rgba(0, 0, 0, 0.4);
+  color: var(--gold-bright);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
   font-weight: 700;
-  color: var(--muted);
 }
 
+/* Answer states wash the parchment rather than replacing it, so the options
+   still read as card text after the reveal. */
 .option--correct {
-  background: var(--correct-bg);
   border-color: var(--correct);
-}
-
-.option--correct .option-key {
-  background: var(--correct);
-  border-color: var(--correct);
-  color: #06210f;
+  background: linear-gradient(180deg, #eef3dc 0%, #d5e2ba 100%);
 }
 
 .option--wrong {
-  background: var(--wrong-bg);
   border-color: var(--wrong);
-}
-
-.option--wrong .option-key {
-  background: var(--wrong);
-  border-color: var(--wrong);
-  color: #2a0a09;
+  background: linear-gradient(180deg, #f6e2da 0%, #e6c6b9 100%);
+  opacity: 0.92;
 }
 
 .option--missed {
-  background: var(--missed-bg);
   border-color: var(--missed);
+  background: linear-gradient(180deg, #faf0cf 0%, #ecd9a4 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28),
+    inset 0 2px 10px rgba(120, 100, 65, 0.22), 0 6px 14px rgba(0, 0, 0, 0.45),
+    0 0 0 2px rgba(201, 162, 39, 0.5), 0 0 22px rgba(201, 162, 39, 0.35);
 }
 
-.option--missed .option-key {
-  background: var(--missed);
-  border-color: var(--missed);
-  color: #2a1f06;
+.option--correct .option-key {
+  background: radial-gradient(circle at 35% 30%, #6d9b4a 0%, #23400f 75%);
+  color: #eaf6d8;
+}
+
+.option--wrong .option-key {
+  background: radial-gradient(circle at 35% 30%, #b25239 0%, #3d1109 75%);
+  color: #fbe3da;
 }
 
 .mana-symbol {
@@ -595,17 +810,43 @@ body {
   gap: 1rem;
 }
 
+.feedback {
+  flex: 1;
+  text-align: center;
+  min-height: 1.4em;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.feedback--ok {
+  color: #9ccf72;
+}
+
+.feedback--bad {
+  color: #e08d76;
+}
+
+/* Gold plate button, beveled like the frames. */
 .next-button {
   flex: none;
-  background: var(--accent);
+  background: linear-gradient(180deg, #f2e0a8 0%, var(--gold) 55%, #8a6c1d 100%);
   color: var(--accent-ink);
-  border: none;
-  border-radius: 10px;
-  padding: 0.75rem 1.8rem;
-  font-size: 1rem;
+  border: 1px solid #6d5518;
+  border-radius: 8px;
+  padding: 0.68rem 1.6rem;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 3px 10px rgba(0, 0, 0, 0.45);
   transition: filter 0.12s ease, transform 0.06s ease;
 }
 
@@ -618,7 +859,7 @@ body {
 }
 
 .next-button:disabled {
-  opacity: 0.35;
+  opacity: 0.3;
   cursor: default;
 }
 
@@ -635,6 +876,9 @@ body {
       "score score";
     align-items: start;
     gap: 1rem;
+  }
+  .app-header h1 {
+    font-size: 1.25rem;
   }
   .app-title {
     grid-area: title;
@@ -671,6 +915,16 @@ body {
     max-width: 620px;
     margin: 0 auto;
   }
+  /* Six full-width tiles for a two-symbol mana cost is a lot of scrolling. */
+  .options-grid--short {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header h1 {
+    font-size: 1.1rem;
+  }
 }
 
 /* Wide screens: card on the left (vertically centered), play column on the right */
@@ -705,6 +959,10 @@ body {
   /* Two wide, comfortably readable columns for the 6 options. */
   .options-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.8rem;
+    gap: 0.85rem;
+  }
+  /* Short answers don't need the width — three tidy columns instead. */
+  .options-grid--short {
+    grid-template-columns: repeat(3, 1fr);
   }
 }

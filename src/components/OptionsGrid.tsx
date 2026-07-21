@@ -26,8 +26,12 @@ export function OptionsGrid({
     return "idle";
   }
 
+  // Short answers (mana cost, P/T, …) get a tighter grid — six one-line tiles
+  // stretched to full width read as empty.
+  const short = round.quizField !== "oracleText";
+
   return (
-    <div className="options-grid">
+    <div className={`options-grid${short ? " options-grid--short" : ""}`}>
       {round.options.map((card, index) => (
         <OptionCard
           key={card.id}

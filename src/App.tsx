@@ -211,69 +211,81 @@ export function App() {
         : `Sets: ${selectedInfo.map((s) => s.name).join(", ")}`;
 
   return (
-    <main className="app">
-      <header className="app-header" ref={headerRef}>
-        <div className="app-title">
-          <h1>Magic: The Gathering Card Quizzer</h1>
-          <p className="app-subtitle">{subtitle}</p>
-        </div>
-        <div className="header-right">
-          <Scoreboard
-            answered={score.answered}
-            correct={score.correct}
-            streak={score.streak}
-            bestStreak={progress.bestStreak}
-          />
-          <SettingsPanel
-            settings={settings}
-            onChange={handleSettingsChange}
-            sets={sets}
-            selectedSets={selectedSets}
-            onSetsChange={handleSetsChange}
-          />
-        </div>
-      </header>
+    <>
+      {/* The current card's art, blurred out behind the page, so the room takes
+          on the colour of whatever's being quizzed. */}
+      <div
+        className="backdrop"
+        style={{ backgroundImage: `url(${round?.card.artCrop ?? ""})` }}
+        aria-hidden
+      />
+      <div className="backdrop-veil" aria-hidden />
 
-      {round ? (
-        <>
-          <CardPrompt
-            card={round.card}
-            symbols={symbols}
-            settings={settings}
-            revealed={pickedIndex !== null}
-          />
-
-          <div className="play">
-            <div className="play-bar">
-              <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
-                {feedback ?? question}
-              </p>
-
-              <button
-                type="button"
-                className="next-button"
-                onClick={handleNext}
-                disabled={pickedIndex === null}
-              >
-                Next card →
-              </button>
-            </div>
-
-            <OptionsGrid
-              round={round}
-              symbols={symbols}
-              pickedIndex={pickedIndex}
-              onPick={handlePick}
+      <main className="app">
+        <header className="app-header" ref={headerRef}>
+          <div className="app-title">
+            <h1>Magic: The Gathering Card Quizzer</h1>
+            <p className="app-subtitle">{subtitle}</p>
+          </div>
+          <div className="header-right">
+            <Scoreboard
+              answered={score.answered}
+              correct={score.correct}
+              streak={score.streak}
+              bestStreak={progress.bestStreak}
+            />
+            <SettingsPanel
+              settings={settings}
+              onChange={handleSettingsChange}
+              sets={sets}
+              selectedSets={selectedSets}
+              onSetsChange={handleSetsChange}
             />
           </div>
-        </>
-      ) : (
-        <div className="message">
-          {deck.length === 0
-            ? "No sets selected — open the settings menu and pick at least one set to start quizzing."
-            : "Loading…"}
-        </div>
-      )}
-    </main>
+        </header>
+
+        {round ? (
+          <>
+            <CardPrompt
+              card={round.card}
+              quizField={round.quizField}
+              symbols={symbols}
+              settings={settings}
+              revealed={pickedIndex !== null}
+            />
+
+            <div className="play">
+              <div className="play-bar">
+                <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
+                  {feedback ?? question}
+                </p>
+
+                <button
+                  type="button"
+                  className="next-button"
+                  onClick={handleNext}
+                  disabled={pickedIndex === null}
+                >
+                  Next card →
+                </button>
+              </div>
+
+              <OptionsGrid
+                round={round}
+                symbols={symbols}
+                pickedIndex={pickedIndex}
+                onPick={handlePick}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="message">
+            {deck.length === 0
+              ? "No sets selected — open the settings menu and pick at least one set to start quizzing."
+              : "Loading…"}
+          </div>
+        )}
+      </main>
+    </>
   );
 }

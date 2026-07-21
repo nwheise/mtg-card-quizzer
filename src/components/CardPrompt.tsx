@@ -1,21 +1,24 @@
 import type { FieldId, QuizCard, SymbolMap } from "../types.ts";
 import type { Settings } from "../game/settings.ts";
 import { FIELDS } from "../game/fields.ts";
+import { frameFor } from "../game/frame.ts";
 import { SymbolText } from "./SymbolText.tsx";
 import { FieldValue } from "./FieldValue.tsx";
 
-// The prompt, styled to echo the top of a real Magic card: a title bar with the
-// name on the left (and the mana cost on the right, when it's prompt info), the
-// art below, and the type line beneath that. Which parts appear is driven by
-// the player's settings — anything routed to "quiz" or "hidden" is left off so
-// it can't spoil the answer.
+// The prompt, drawn as a real Magic frame: a title bar with the name (and the
+// mana cost on the right, when it's prompt info), an inset art window, the type
+// bar, and a parchment text box. Which parts appear is driven by the player's
+// settings — anything routed to "quiz" or "hidden" is left off so it can't
+// spoil the answer.
 export function CardPrompt({
   card,
+  quizField,
   symbols,
   settings,
   revealed,
 }: {
   card: QuizCard;
+  quizField: FieldId;
   symbols: SymbolMap;
   settings: Settings;
   revealed: boolean;
@@ -51,10 +54,15 @@ export function CardPrompt({
   const showOracle =
     settings.oracleText === "prompt" && FIELDS.oracleText.has(card);
 
-  // Parts shown as labeled rows beneath the type line. (Mana cost, the subtype,
-  // and power/toughness get bespoke placement, so they're excluded here.)
-  // Oracle text already spells out the keywords, so when it's shown we drop the
-  // separate keywords row to avoid the redundancy.
+  // The frame wears the card's colour — but that colour is exactly what a
+  // quizzed mana cost is asking for, so fall back to the neutral plate whenever
+  // the cost isn't already on show.
+  const frame = showCost ? frameFor(card) : "neutral";
+
+  // Parts shown in the text box. (Mana cost, the subtype, and power/toughness
+  // get bespoke placement, so they're excluded here.) Oracle text already
+  // spells out the keywords, so when it's shown we drop the separate keywords
+  // row to avoid the redundancy.
   const infoFields = (["keywords", "oracleText"] as FieldId[]).filter((id) => {
     if (settings[id] !== "prompt" || !FIELDS[id].has(card)) return false;
     if (id === "keywords" && showOracle) return false;
@@ -63,38 +71,55 @@ export function CardPrompt({
 
   return (
     <div className="card-prompt">
-      <div className="card-frame">
-        <div className="card-titlebar">
-          <span className="card-title-name">{card.name}</span>
-          {showCost && (
-            <span className="card-title-cost">
-              <SymbolText text={card.manaCost} symbols={symbols} />
-            </span>
-          )}
-        </div>
-        <img
-          className={`card-art${isSaga ? " card-art--saga" : ""}`}
-          src={card.artCrop}
-          alt={card.name}
-          draggable={false}
-        />
-        <div className="card-typeline">
-          {card.primaryType}
-          {showSubtype && ` — ${FIELDS.typeLine.value(card)}`}
-        </div>
+      <div className={`card frame--${frame}`}>
+        <div className="card-plate">
+          <div className="card-bar card-titlebar">
+            <span className="card-title-name">{card.name}</span>
+            {showCost && (
+              <span className="card-title-cost">
+                <SymbolText text={card.manaCost} symbols={symbols} />
+              </span>
+            )}
+          </div>
 
-        {infoFields.length > 0 && (
-          <div className="card-prompt-info">
+          <div className={`card-artwindow${isSaga ? " card-artwindow--saga" : ""}`}>
+            <img
+              className={`card-art${isSaga ? " card-art--saga" : ""}`}
+              src={card.artCrop}
+              alt={card.name}
+              draggable={false}
+            />
+          </div>
+
+          <div className="card-bar card-typeline">
+            <span>
+              {card.primaryType}
+              {showSubtype && ` — ${FIELDS.typeLine.value(card)}`}
+            </span>
+          </div>
+
+          {/* Always rendered, even when nothing is routed here — a card without
+              a text box doesn't read as a card. When it's empty, the question
+              itself sits in it, set like flavour text. */}
+          <div className="card-textbox">
+            {infoFields.length === 0 && (
+              <p className="textbox-placeholder">
+                Which {FIELDS[quizField].noun}?
+              </p>
+            )}
             {infoFields.map((id) => (
               <div className="prompt-field" key={id}>
-                <span className="prompt-field-label">{FIELDS[id].label}</span>
+                {/* Rules text needs no label — it's what a text box is for. */}
+                {id !== "oracleText" && (
+                  <span className="prompt-field-label">{FIELDS[id].label}</span>
+                )}
                 <span className="prompt-field-value">
                   <FieldValue field={id} card={card} symbols={symbols} />
                 </span>
               </div>
             ))}
           </div>
-        )}
+        </div>
 
         {showPT && (
           <span className="card-pt">{FIELDS.powerToughness.value(card)}</span>
