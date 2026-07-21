@@ -535,32 +535,60 @@ body {
 }
 
 .rarity-pip--icon {
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
   margin-right: 0;
   transform: none;
   border-radius: 0;
   box-shadow: none;
   -webkit-mask: var(--set-icon) center / contain no-repeat;
   mask: var(--set-icon) center / contain no-repeat;
-  /* A soft dark edge so a light rarity (silver/gold) doesn't wash out against a
-     light frame bar. */
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.55));
+  /* A crisp ~0.5px dark edge on every side (four hard drop-shadows, no blur),
+     mirroring the engraved outline a printed set symbol has. This keeps a
+     light silver/gold glyph legible on a light frame bar, the way the real
+     symbol's dark border does — rather than the fuzzy halo a blurred shadow
+     would give. */
+  filter: drop-shadow(0.4px 0 0 rgba(0, 0, 0, 0.7))
+    drop-shadow(-0.4px 0 0 rgba(0, 0, 0, 0.7))
+    drop-shadow(0 0.4px 0 rgba(0, 0, 0, 0.7))
+    drop-shadow(0 -0.4px 0 rgba(0, 0, 0, 0.7));
 }
 
+/* Rarity fills, as metallic gradients matching the printed convention: common
+   is flat black ink, uncommon is silver, rare is gold, mythic is the
+   orange-bronze mythic foil. Each runs highlight → mid → shadow on a diagonal
+   so the masked glyph reads as struck metal rather than a flat colour. */
 .rarity--common {
-  background: linear-gradient(140deg, #4a4a4a, #101010);
+  background: linear-gradient(135deg, #3c3c3c 0%, #1a1a1a 50%, #000 100%);
 }
 .rarity--uncommon {
-  background: linear-gradient(140deg, #e7eef2, #7e8a93);
+  background: linear-gradient(
+    135deg,
+    #f4f8fb 0%,
+    #c4d0d8 30%,
+    #7d8c98 62%,
+    #b3bec7 100%
+  );
 }
 .rarity--rare {
-  background: linear-gradient(140deg, #f4e2a2, #a2802b);
+  background: linear-gradient(
+    135deg,
+    #fff4cc 0%,
+    #e9c862 30%,
+    #a3771d 64%,
+    #dcb85a 100%
+  );
 }
 .rarity--mythic,
 .rarity--special,
 .rarity--bonus {
-  background: linear-gradient(140deg, #f7a94a, #a02414);
+  background: linear-gradient(
+    135deg,
+    #ffd9a2 0%,
+    #f4913a 32%,
+    #b1301a 66%,
+    #e5692a 100%
+  );
 }
 
 /* Art window, inset into the plate the way a printed card's art is. */
