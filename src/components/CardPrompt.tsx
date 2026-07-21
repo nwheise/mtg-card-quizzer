@@ -96,24 +96,23 @@ export function CardPrompt({
               {card.primaryType}
               {showSubtype && ` — ${FIELDS.typeLine.value(card)}`}
             </span>
-            {/* The set symbol a real card carries at the right end of its type
-                line, coloured by rarity. Masks the set's monochrome SVG so any
-                set's glyph takes the rarity colour; falls back to a plain
-                rarity lozenge if the icon URL is missing. */}
-            <span
-              className={`rarity-pip rarity--${card.rarity}${
-                setIcon ? " rarity-pip--icon" : ""
-              }`}
-              style={
-                setIcon
-                  ? ({
-                      "--set-icon": `url("${setIcon}")`,
-                    } as CSSProperties)
-                  : undefined
-              }
-              title={`${card.rarity}${setIcon ? ` · ${card.set.toUpperCase()}` : ""}`}
-              aria-label={`${card.rarity} rarity`}
-            />
+            {/* Right end of the type bar, like a printed card: the set symbol
+                (Scryfall's monochrome glyph, drawn in the type-line ink) next to
+                a rarity-coloured gem. */}
+            <span className="rarity-cluster">
+              {setIcon && (
+                <span
+                  className="set-glyph"
+                  style={{ "--set-icon": `url("${setIcon}")` } as CSSProperties}
+                  aria-label={`${card.set.toUpperCase()} set`}
+                />
+              )}
+              <span
+                className={`rarity-gem rarity--${card.rarity}`}
+                title={card.rarity}
+                aria-label={`${card.rarity} rarity`}
+              />
+            </span>
           </div>
 
           {/* Always rendered, even when nothing is routed here — a card without

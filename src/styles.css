@@ -377,64 +377,64 @@ body {
   align-items: center;
 }
 
-/* Frame colours: --f1/--f2 are the plate gradient, --f-ink the engraved text,
-   --f-box the parchment tint of the text box (each printed colour tints its
-   text box slightly). The defaults here are the neutral plate used whenever
-   showing the card's real colour would give a quizzed mana cost away. */
+/* Frame colours: --f1/--f2 are the plate gradient, --f-box the parchment tint
+   of the text box (each printed colour tints its box slightly). The defaults
+   here are the neutral plate used whenever showing the card's real colour would
+   give a quizzed mana cost away.
+
+   Real cards print the card name, type line and P/T in *black* on a lightened
+   nameplate of the frame colour — so the ink (--f-ink) is a single near-black
+   for every frame, and the bars/P-T box derive a light, colour-tinted plate
+   from --f1 (--np-1/2/3) rather than using the saturated plate directly. */
 .card,
 .frame--neutral {
   --f1: #9aa3ac;
   --f2: #4d565f;
-  --f-ink: #f2ede2;
   --f-box: #ebe6d8;
+  --f-ink: #1a1611;
+  --np-1: color-mix(in srgb, var(--f1) 50%, #ffffff);
+  --np-2: color-mix(in srgb, var(--f1) 80%, #ffffff);
+  --np-3: color-mix(in srgb, var(--f1) 88%, #000000);
 }
 
 .frame--w {
-  --f1: #fdfbf1;
+  --f1: #efe7cf;
   --f2: #d8cfb2;
-  --f-ink: #241f14;
   --f-box: #f7f2e0;
 }
 .frame--u {
   --f1: #56a0d3;
   --f2: #14496f;
-  --f-ink: #f0f7ff;
   --f-box: #e4edf3;
 }
 .frame--b {
-  --f1: #55535c;
+  --f1: #6a6771;
   --f2: #16151a;
-  --f-ink: #e9e6ef;
   --f-box: #e2dfe2;
 }
 .frame--r {
   --f1: #e07a54;
   --f2: #85261a;
-  --f-ink: #fff2ec;
   --f-box: #f4e3d9;
 }
 .frame--g {
   --f1: #57a06a;
   --f2: #1a4a2a;
-  --f-ink: #f0fbf1;
   --f-box: #e4ecdc;
 }
 .frame--gold {
   --f1: #eed890;
   --f2: #a5802b;
-  --f-ink: #2b2003;
   --f-box: #f5ecd2;
 }
 .frame--artifact {
   --f1: #a7b0b8;
   --f2: #495159;
-  --f-ink: #f4f7fa;
   --f-box: #e8ebee;
 }
 .frame--land {
   --f1: #c09a6c;
   --f2: #5a4023;
-  --f-ink: #fdf4e6;
   --f-box: #ece0cb;
 }
 
@@ -475,25 +475,21 @@ body {
   gap: 0.6rem;
   padding: 0.28rem 0.6rem;
   border-radius: 7px;
+  /* Black ink on a lightened, colour-tinted nameplate — the way a printed card
+     stamps its name and type line. */
   color: var(--f-ink);
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.34) 0%,
-    rgba(255, 255, 255, 0.06) 45%,
-    rgba(0, 0, 0, 0.22) 100%
+    var(--np-1) 0%,
+    var(--np-2) 48%,
+    var(--np-3) 100%
   );
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
   font-family: var(--font-display);
   font-weight: 600;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
-}
-
-/* Light frames (white, gold, artifact) carry dark engraved text, so the drop
-   shadow under it has to lighten instead. */
-.frame--w .card-bar,
-.frame--gold .card-bar {
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+  /* Dark text: a faint light halo below reads as engraving. */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .card-title-name {
@@ -519,77 +515,53 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* The set symbol at the end of the type bar, filled with a rarity-coloured
-   gradient. Default is a lozenge (fallback when no icon URL is available); when
-   an icon is present, .rarity-pip--icon masks the set's own glyph out of the
-   same gradient, so the symbol keeps its shape but takes the rarity colour. */
-.rarity-pip {
+/* The end of the type bar carries the set symbol paired with a rarity gem.
+   Scryfall only ships the set glyph as a flat silhouette (no colour, no bevel),
+   so rather than fake a metallic foil that never quite reads right, we draw the
+   glyph in the same black ink as the type line and put the rarity beside it as
+   a coloured gem — set identity in one mark, rarity in the other. */
+.rarity-cluster {
+  display: inline-flex;
   flex: none;
-  width: 0.68rem;
-  height: 0.68rem;
-  margin-right: 0.1rem;
-  transform: rotate(45deg);
-  border-radius: 2px;
-  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.55),
-    0 1px 2px rgba(0, 0, 0, 0.45);
+  align-items: center;
+  gap: 0.32rem;
 }
 
-.rarity-pip--icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  margin-right: 0;
-  transform: none;
-  border-radius: 0;
-  box-shadow: none;
+.set-glyph {
+  width: 1rem;
+  height: 1rem;
+  background: var(--f-ink);
   -webkit-mask: var(--set-icon) center / contain no-repeat;
   mask: var(--set-icon) center / contain no-repeat;
-  /* Scryfall only ships the flat silhouette, so the raised-metal look of a
-     printed set symbol has to be faked: a bright fringe on the top edge and a
-     dark one on the bottom read as a bevel catching an overhead light, and the
-     two side fringes give the engraved outline that keeps a light glyph legible
-     on a light frame bar. All hard (no blur) so they stay crisp at this size. */
-  filter: drop-shadow(0 -0.4px 0 rgba(255, 255, 255, 0.55))
-    drop-shadow(0 0.5px 0.3px rgba(0, 0, 0, 0.8))
-    drop-shadow(0.4px 0 0 rgba(0, 0, 0, 0.5))
-    drop-shadow(-0.4px 0 0 rgba(0, 0, 0, 0.5));
+  /* A hair of the light nameplate below it, so the black glyph looks engraved
+     rather than pasted on. */
+  filter: drop-shadow(0 0.5px 0 rgba(255, 255, 255, 0.45));
+  opacity: 0.9;
 }
 
-/* Rarity fills, as top-lit metallic gradients matching the printed convention:
-   common is flat black ink, uncommon is silver, rare is gold, mythic is the
-   orange-bronze mythic foil. Vertical (bright top → dark bottom) so the fill
-   agrees with the bevel fringes above and the masked glyph reads as struck
-   metal lit from overhead rather than a flat colour. */
+/* Rarity gem: a small cut lozenge in the rarity colour. */
+.rarity-gem {
+  width: 0.62rem;
+  height: 0.62rem;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
 .rarity--common {
-  background: linear-gradient(180deg, #5c5c5c 0%, #232323 55%, #000 100%);
+  background: linear-gradient(140deg, #565656 0%, #141414 100%);
 }
 .rarity--uncommon {
-  background: linear-gradient(
-    180deg,
-    #ffffff 0%,
-    #d3dce2 32%,
-    #8b98a4 70%,
-    #5c6771 100%
-  );
+  background: linear-gradient(140deg, #eef3f6 0%, #7c8b96 100%);
 }
 .rarity--rare {
-  background: linear-gradient(
-    180deg,
-    #fff8dc 0%,
-    #f1d277 33%,
-    #b5851f 72%,
-    #7c580f 100%
-  );
+  background: linear-gradient(140deg, #f8e7a1 0%, #a5822c 100%);
 }
 .rarity--mythic,
 .rarity--special,
 .rarity--bonus {
-  background: linear-gradient(
-    180deg,
-    #ffe6b4 0%,
-    #ff9a38 38%,
-    #c5311a 76%,
-    #7c1c0c 100%
-  );
+  background: linear-gradient(140deg, #f7a24a 0%, #a3271a 100%);
 }
 
 /* Art window, inset into the plate the way a printed card's art is. */
@@ -685,22 +657,23 @@ body {
   margin-top: 0.4rem;
 }
 
-/* Power/toughness box, hanging off the bottom-right corner of the frame. */
+/* Power/toughness box, hanging off the bottom-right corner of the frame. Black
+   numbers on a lightened, colour-tinted plate, like the printed P/T box. */
 .card-pt {
   position: absolute;
   right: 4.5%;
   bottom: 1.6%;
   padding: 0.06rem 0.7rem;
   border-radius: 6px / 8px;
-  background: linear-gradient(160deg, var(--f1) 0%, var(--f2) 120%);
+  background: linear-gradient(160deg, var(--np-1) 0%, var(--np-3) 130%);
   color: var(--f-ink);
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 2px 6px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 6px rgba(0, 0, 0, 0.55);
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 /* Full card image shown after answering (replaces the framed prompt). */
