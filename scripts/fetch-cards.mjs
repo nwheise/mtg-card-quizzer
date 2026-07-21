@@ -1,6 +1,7 @@
-// Downloads the MTG "Marvel Super Heroes" (MSH) set from Scryfall and writes a
-// normalized, trimmed dataset the static app can load directly:
-//   public/cards.json    - one entry per quizzable card
+// Downloads one or more MTG sets from Scryfall and writes a normalized, trimmed
+// dataset the static app can load directly:
+//   public/cards.json    - one entry per quizzable card, each tagged with `set`
+//   public/sets.json     - [{ code, name, released, count }] set manifest
 //   public/symbols.json  - { "{R}": "<svg url>", ... } for rendering mana symbols
 //
 // Scryfall asks API consumers to identify themselves and to cache results rather
@@ -19,12 +20,23 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUT_DIR = join(__dirname, "..", "public");
 
 const USER_AGENT = "mtg-quizzer/0.1 (nick@heise.org)";
+
+// The sets to include in the quiz, by Scryfall set code. Add a code here and
+// re-run `npm run fetch` to make a set selectable in the app. Sets that are
+// still in spoiler season (e.g. HOB) come down partial and grow as more cards
+// are previewed — just re-fetch to pick them up.
+const SETS = ["msh", "hob"];
+
 // `-t:basic` excludes every card with the Basic supertype (including full-art
 // printings). Note: `-is:basic` does NOT work for MSH — Scryfall still returns
 // the basics, and their printed reminder-only text ("({T}: Add {U}.)") renders
 // blank once cleanOracle() strips it, producing an empty "correct" answer.
-const SEARCH_URL =
-  "https://api.scryfall.com/cards/search?q=set%3Amsh+-t%3Abasic&unique=cards&order=name";
+const searchUrl = (code) =>
+  `https://api.scryfall.com/cards/search?q=set%3A${encodeURIComponent(
+    code,
+  )}+-t%3Abasic&unique=cards&order=name`;
+const setInfoUrl = (code) =>
+  `https://api.scryfall.com/sets/${encodeURIComponent(code)}`;
 const SYMBOLOGY_URL = "https://api.scryfall.com/symbology";
 
 function getJson(url) {
@@ -57,7 +69,7 @@ function primaryType(typeLine = "") {
 
 // Collapse a card (including double-faced / modal cards whose data lives in
 // card_faces[]) into a single quiz entry.
-function normalize(card) {
+function normalize(card, setCode) {
   const faces = card.card_faces ?? [];
 
   const artCrop =
@@ -77,6 +89,7 @@ function normalize(card) {
 
   return {
     id: card.id,
+    set: setCode,
     name: card.name,
     artCrop,
     image,
@@ -99,9 +112,10 @@ function normalize(card) {
 // a single entry via normalize().
 const SPLIT_LAYOUTS = new Set(["transform", "modal_dfc"]);
 
-function faceToQuiz(card, face, i) {
+function faceToQuiz(card, face, i, setCode) {
   return {
     id: `${card.id}-${i}`,
+    set: setCode,
     name: face.name,
     artCrop: face.image_uris?.art_crop ?? null,
     image: face.image_uris?.normal ?? null,
@@ -120,30 +134,44 @@ function faceToQuiz(card, face, i) {
 
 // Returns one quiz entry per card, except double-sided cards which yield one
 // entry per face.
-function toQuizCards(card) {
+function toQuizCards(card, setCode) {
   if (SPLIT_LAYOUTS.has(card.layout) && Array.isArray(card.card_faces)) {
-    return card.card_faces.map((face, i) => faceToQuiz(card, face, i));
+    return card.card_faces.map((face, i) => faceToQuiz(card, face, i, setCode));
   }
-  return [normalize(card)];
+  return [normalize(card, setCode)];
 }
 
-async function fetchAllCards() {
+async function fetchSetCards(code) {
   const all = [];
-  let url = SEARCH_URL;
+  let url = searchUrl(code);
   let page = 0;
   while (url) {
     page += 1;
     const data = getJson(url);
     if (data.object === "error") {
-      throw new Error(`Scryfall error: ${data.details}`);
+      throw new Error(`Scryfall error for set ${code}: ${data.details}`);
     }
     all.push(...data.data);
-    process.stdout.write(`  page ${page}: ${all.length} cards so far\n`);
+    process.stdout.write(`  ${code} page ${page}: ${all.length} cards so far\n`);
     url = data.has_more ? data.next_page : null;
     if (url) await sleep(120); // be polite to the API
   }
   return all;
 }
+
+function fetchSetInfo(code) {
+  const data = getJson(setInfoUrl(code));
+  if (data.object === "error") {
+    throw new Error(`Scryfall error for set ${code}: ${data.details}`);
+  }
+  return { name: data.name, released: data.released_at ?? "" };
+}
+
+// A card whose entire oracle text is reminder text (parentheticals) — e.g. a
+// basic land's "({T}: Add {U}.)" — renders blank in the UI once cleanOracle()
+// strips it, so it can't be a valid quiz answer. Mirror that stripping here to
+// drop such cards at build time.
+const meaningfulText = (t) => t.replace(/\s*\([^)]*\)/g, "").trim().length > 0;
 
 function fetchSymbols() {
   const data = getJson(SYMBOLOGY_URL);
@@ -157,27 +185,49 @@ function fetchSymbols() {
 async function main() {
   mkdirSync(OUT_DIR, { recursive: true });
 
-  console.log("Fetching MSH cards from Scryfall...");
-  const raw = await fetchAllCards();
+  const cards = [];
+  const manifest = [];
 
-  const entries = raw.flatMap(toQuizCards);
-  // Require art and *meaningful* oracle text. A card whose entire oracle text is
-  // reminder text (parentheticals) — e.g. a basic land's "({T}: Add {U}.)" —
-  // renders blank in the UI once cleanOracle() strips it, so it can't be a valid
-  // quiz answer. Mirror that stripping here to drop such cards at build time.
-  const meaningfulText = (t) => t.replace(/\s*\([^)]*\)/g, "").trim().length > 0;
-  const cards = entries.filter((c) => c.artCrop && meaningfulText(c.oracleText));
+  for (const code of SETS) {
+    const info = fetchSetInfo(code);
+    console.log(`Fetching ${code} (${info.name}) from Scryfall...`);
+    const raw = await fetchSetCards(code);
 
-  const dropped = entries.length - cards.length;
+    const entries = raw.flatMap((c) => toQuizCards(c, code));
+    // Require art and *meaningful* oracle text (see meaningfulText above).
+    const kept = entries.filter(
+      (c) => c.artCrop && meaningfulText(c.oracleText),
+    );
+
+    cards.push(...kept);
+    manifest.push({
+      code,
+      name: info.name,
+      released: info.released,
+      count: kept.length,
+    });
+    console.log(
+      `  ${code}: kept ${kept.length} quiz cards from ${raw.length} Scryfall cards ` +
+        `(dropped ${entries.length - kept.length} without art/oracle text).`,
+    );
+    await sleep(120);
+  }
+
   cards.sort((a, b) => a.name.localeCompare(b.name));
+  // Newest set first, so the app's "latest set" default is easy to read off.
+  manifest.sort((a, b) => b.released.localeCompare(a.released));
 
   writeFileSync(
     join(OUT_DIR, "cards.json"),
     JSON.stringify(cards, null, 0) + "\n",
   );
+  writeFileSync(
+    join(OUT_DIR, "sets.json"),
+    JSON.stringify(manifest, null, 0) + "\n",
+  );
   console.log(
-    `Wrote ${cards.length} quiz cards to public/cards.json from ${raw.length} Scryfall cards ` +
-      `(double-sided cards split into per-face entries; dropped ${dropped} without art/oracle text).`,
+    `Wrote ${cards.length} quiz cards across ${manifest.length} sets to ` +
+      `public/cards.json (+ public/sets.json).`,
   );
 
   console.log("Fetching mana symbols...");

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { QuizCard, Round, SymbolMap } from "./types.ts";
+import type { QuizCard, Round, SetInfo, SymbolMap } from "./types.ts";
 import { loadGameData } from "./data/loadCards.ts";
 import { buildRound } from "./game/buildOptions.ts";
 import { selectCard } from "./game/selectCard.ts";
@@ -12,6 +12,9 @@ import {
 import {
   loadSettings,
   saveSettings,
+  loadSelectedSets,
+  saveSelectedSets,
+  cardsInSets,
   eligibleCards,
   pickQuizField,
   type Settings,
@@ -33,6 +36,8 @@ const ZERO_SCORE: SessionScore = { answered: 0, correct: 0, streak: 0 };
 export function App() {
   const [cards, setCards] = useState<QuizCard[] | null>(null);
   const [symbols, setSymbols] = useState<SymbolMap>({});
+  const [sets, setSets] = useState<SetInfo[]>([]);
+  const [selectedSets, setSelectedSets] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
@@ -42,17 +47,25 @@ export function App() {
   const [score, setScore] = useState<SessionScore>(ZERO_SCORE);
   const headerRef = useRef<HTMLElement>(null);
 
-  // Load card + symbol data once.
+  // Load card + symbol + set data once.
   useEffect(() => {
     loadGameData()
-      .then(({ cards, symbols }) => {
+      .then(({ cards, symbols, sets }) => {
         setSymbols(symbols);
+        setSets(sets);
+        setSelectedSets(loadSelectedSets(sets));
         setCards(cards);
       })
       .catch((err: unknown) =>
         setError(err instanceof Error ? err.message : String(err)),
       );
   }, []);
+
+  // The deck actually in play: only cards from the selected sets.
+  const deck = useMemo(
+    () => (cards ? cardsInSets(cards, selectedSets) : []),
+    [cards, selectedSets],
+  );
 
   const nextRound = useCallback(
     (
@@ -72,10 +85,10 @@ export function App() {
     [],
   );
 
-  // Kick off the first round once data is ready.
+  // Kick off the first round once data is ready (and there's a deck to play).
   useEffect(() => {
-    if (cards && !round) nextRound(cards, progress, null, settings);
-  }, [cards, round, progress, settings, nextRound]);
+    if (deck.length > 0 && !round) nextRound(deck, progress, null, settings);
+  }, [deck, round, progress, settings, nextRound]);
 
   const handlePick = useCallback(
     (index: number) => {
@@ -112,18 +125,32 @@ export function App() {
   );
 
   const handleNext = useCallback(() => {
-    if (!cards || !round || pickedIndex === null) return;
-    nextRound(cards, progress, round.card.id, settings);
-  }, [cards, round, pickedIndex, progress, settings, nextRound]);
+    if (deck.length === 0 || !round || pickedIndex === null) return;
+    nextRound(deck, progress, round.card.id, settings);
+  }, [deck, round, pickedIndex, progress, settings, nextRound]);
 
   // Changing what's quizzed invalidates the current round, so start a fresh one.
   const handleSettingsChange = useCallback(
     (next: Settings) => {
       setSettings(next);
       saveSettings(next);
-      if (cards) nextRound(cards, progress, round?.card.id ?? null, next);
+      if (deck.length > 0) nextRound(deck, progress, round?.card.id ?? null, next);
     },
-    [cards, progress, round, nextRound],
+    [deck, progress, round, nextRound],
+  );
+
+  // Changing the selected sets swaps the deck out from under the round, so
+  // rebuild from the new deck (or clear the round if nothing's selected).
+  const handleSetsChange = useCallback(
+    (next: string[]) => {
+      setSelectedSets(next);
+      saveSelectedSets(next);
+      if (!cards) return;
+      const nextDeck = cardsInSets(cards, next);
+      if (nextDeck.length > 0) nextRound(nextDeck, progress, null, settings);
+      else setRound(null);
+    },
+    [cards, progress, settings, nextRound],
   );
 
   // Keyboard: 1-9 to pick, Enter/Space to advance.
@@ -167,20 +194,28 @@ export function App() {
     );
   }
 
-  if (!cards || !round) {
+  if (!cards) {
     return (
       <main className="app">
-        <div className="message">Loading Marvel Super Heroes cards…</div>
+        <div className="message">Loading cards…</div>
       </main>
     );
   }
+
+  const selectedInfo = sets.filter((s) => selectedSets.includes(s.code));
+  const subtitle =
+    selectedInfo.length === 0
+      ? "No sets selected"
+      : selectedInfo.length === 1
+        ? `Set: ${selectedInfo[0].name} (${selectedInfo[0].code.toUpperCase()})`
+        : `Sets: ${selectedInfo.map((s) => s.name).join(", ")}`;
 
   return (
     <main className="app">
       <header className="app-header" ref={headerRef}>
         <div className="app-title">
           <h1>Magic: The Gathering Card Quizzer</h1>
-          <p className="app-subtitle">Current set: Marvel Super Heroes (MSH)</p>
+          <p className="app-subtitle">{subtitle}</p>
         </div>
         <div className="header-right">
           <Scoreboard
@@ -189,40 +224,56 @@ export function App() {
             streak={score.streak}
             bestStreak={progress.bestStreak}
           />
-          <SettingsPanel settings={settings} onChange={handleSettingsChange} />
+          <SettingsPanel
+            settings={settings}
+            onChange={handleSettingsChange}
+            sets={sets}
+            selectedSets={selectedSets}
+            onSetsChange={handleSetsChange}
+          />
         </div>
       </header>
 
-      <CardPrompt
-        card={round.card}
-        symbols={symbols}
-        settings={settings}
-        revealed={pickedIndex !== null}
-      />
+      {round ? (
+        <>
+          <CardPrompt
+            card={round.card}
+            symbols={symbols}
+            settings={settings}
+            revealed={pickedIndex !== null}
+          />
 
-      <div className="play">
-        <div className="play-bar">
-          <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
-            {feedback ?? question}
-          </p>
+          <div className="play">
+            <div className="play-bar">
+              <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
+                {feedback ?? question}
+              </p>
 
-          <button
-            type="button"
-            className="next-button"
-            onClick={handleNext}
-            disabled={pickedIndex === null}
-          >
-            Next card →
-          </button>
+              <button
+                type="button"
+                className="next-button"
+                onClick={handleNext}
+                disabled={pickedIndex === null}
+              >
+                Next card →
+              </button>
+            </div>
+
+            <OptionsGrid
+              round={round}
+              symbols={symbols}
+              pickedIndex={pickedIndex}
+              onPick={handlePick}
+            />
+          </div>
+        </>
+      ) : (
+        <div className="message">
+          {deck.length === 0
+            ? "No sets selected — open the settings menu and pick at least one set to start quizzing."
+            : "Loading…"}
         </div>
-
-        <OptionsGrid
-          round={round}
-          symbols={symbols}
-          pickedIndex={pickedIndex}
-          onPick={handlePick}
-        />
-      </div>
+      )}
     </main>
   );
 }

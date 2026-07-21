@@ -2,10 +2,11 @@
 // one of three roles — shown in the prompt, quizzed on, or hidden — and when
 // several parts are set to "quiz" each round picks one of them at random.
 
-import type { FieldId, FieldRole, QuizCard } from "../types.ts";
+import type { FieldId, FieldRole, QuizCard, SetInfo } from "../types.ts";
 import { FIELD_IDS, FIELDS } from "./fields.ts";
 
 const STORAGE_KEY = "msh-settings-v1";
+const SETS_STORAGE_KEY = "msh-selected-sets-v1";
 
 export type Settings = Record<FieldId, FieldRole>;
 
@@ -69,6 +70,56 @@ export function eligibleCards(
   settings: Settings,
 ): QuizCard[] {
   return cards.filter((c) => availableQuizFields(c, settings).length > 0);
+}
+
+// --- Set selection -------------------------------------------------------
+// Which sets are in play is a separate concern from how each field is routed,
+// so it lives under its own localStorage key. The stored value is a list of
+// Scryfall set codes; anything no longer in the manifest is ignored.
+
+// The default for a brand-new visitor: just the most recently released set.
+export function defaultSelectedSets(available: SetInfo[]): string[] {
+  if (available.length === 0) return [];
+  const latest = available.reduce((a, b) =>
+    b.released.localeCompare(a.released) > 0 ? b : a,
+  );
+  return [latest.code];
+}
+
+// Load the player's chosen set codes, filtered to those still available. Falls
+// back to the newest set when nothing valid is stored (first visit, or every
+// stored code has since disappeared from the manifest).
+export function loadSelectedSets(available: SetInfo[]): string[] {
+  const codes = new Set(available.map((s) => s.code));
+  try {
+    const raw = localStorage.getItem(SETS_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as unknown;
+      if (Array.isArray(parsed)) {
+        const valid = parsed.filter(
+          (c): c is string => typeof c === "string" && codes.has(c),
+        );
+        if (valid.length > 0) return valid;
+      }
+    }
+  } catch {
+    // Ignore malformed/unavailable storage and fall back to the default.
+  }
+  return defaultSelectedSets(available);
+}
+
+export function saveSelectedSets(selected: string[]): void {
+  try {
+    localStorage.setItem(SETS_STORAGE_KEY, JSON.stringify(selected));
+  } catch {
+    // localStorage may be unavailable (private mode / quota) — ignore.
+  }
+}
+
+// The cards drawn from the currently selected sets.
+export function cardsInSets(cards: QuizCard[], selected: string[]): QuizCard[] {
+  const set = new Set(selected);
+  return cards.filter((c) => set.has(c.set));
 }
 
 // Pick which part of `card` to quiz this round, at random among those that

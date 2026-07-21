@@ -1,9 +1,11 @@
-# MSH Card Quizzer
+# MTG Card Quizzer
 
-A flashcard-style web app for learning the Magic: The Gathering **Marvel Super
-Heroes** (set code `MSH`) set. It shows a card's art and name, gives you some of
-its info, then asks you to pick another part of it from six options — training
-fast "see the card → recall what it does" recognition.
+A flashcard-style web app for learning Magic: The Gathering sets. It shows a
+card's art and name, gives you some of its info, then asks you to pick another
+part of it from six options — training fast "see the card → recall what it
+does" recognition.
+
+Currently ships with **Marvel Super Heroes** (`MSH`) and **The Hobbit** (`HOB`).
 
 It's a fully static single-page app (no backend). Card data comes from
 [Scryfall](https://scryfall.com) and is pre-fetched into `public/cards.json`.
@@ -13,6 +15,10 @@ It's a fully static single-page app (no backend). Card data comes from
 - Each round shows one card (art crop + name, plus whatever else you've put in
   the prompt) and six **same-type** options for the part being quizzed — the
   correct one plus five distractors.
+- **Sets** (top-right gear) lets you quiz from one set or several at once. A new
+  visitor starts on the most recently released set. Within a question, the wrong
+  answers are drawn from the shown card's *own* set, so mixing sets varies which
+  cards come up without making any single question easier.
 - **Customize** (top-right gear) lets you route each part of a card — oracle
   text, mana cost, type line, keywords, power/toughness — to one of three slots:
   shown in the **prompt**, used as a **quiz** item, or **hidden**. Set several
@@ -32,11 +38,14 @@ It's a fully static single-page app (no backend). Card data comes from
 
 ```bash
 npm install
-npm run fetch   # download/refresh MSH data -> public/cards.json + symbols.json
+npm run fetch   # download/refresh set data -> public/cards.json, sets.json, symbols.json
 npm run dev     # start the dev server
 npm run build   # type-check + production build into dist/
 ```
 
-`npm run fetch` pulls the set from Scryfall (including each card's keywords);
-re-run it to pick up data/art updates (the set releases 2026-06-26, so details
-may still change).
+`npm run fetch` pulls every set listed in the `SETS` array at the top of
+`scripts/fetch-cards.mjs` (including each card's keywords). **To add a set**, add
+its Scryfall set code there and re-run the fetch — it shows up in the picker
+automatically. Re-run it to pick up data/art updates, too: MSH releases
+2026-06-26 and HOB 2026-08-14, and a set still in spoiler season comes down
+partial and grows as more cards are previewed.

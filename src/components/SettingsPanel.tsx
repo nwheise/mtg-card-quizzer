@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { FieldId, FieldRole } from "../types.ts";
+import type { FieldId, FieldRole, SetInfo } from "../types.ts";
 import type { Settings } from "../game/settings.ts";
 import { quizFieldIds } from "../game/settings.ts";
 import { FIELD_IDS, FIELDS } from "../game/fields.ts";
@@ -10,13 +10,20 @@ const ROLES: { id: FieldRole; label: string }[] = [
   { id: "hidden", label: "Hidden" },
 ];
 
-// A small gear/popover for routing each card part to prompt / quiz / hidden.
+// A small gear/popover for choosing which sets are in play and routing each
+// card part to prompt / quiz / hidden.
 export function SettingsPanel({
   settings,
   onChange,
+  sets,
+  selectedSets,
+  onSetsChange,
 }: {
   settings: Settings;
   onChange: (next: Settings) => void;
+  sets: SetInfo[];
+  selectedSets: string[];
+  onSetsChange: (next: string[]) => void;
 }) {
   const [open, setOpen] = useState(false);
   const quizCount = quizFieldIds(settings).length;
@@ -24,6 +31,17 @@ export function SettingsPanel({
   function setRole(id: FieldId, role: FieldRole) {
     if (settings[id] === role) return;
     onChange({ ...settings, [id]: role });
+  }
+
+  function toggleSet(code: string) {
+    const on = selectedSets.includes(code);
+    // Don't let the player deselect the last remaining set — there'd be no
+    // cards to quiz on.
+    if (on && selectedSets.length === 1) return;
+    const next = on
+      ? selectedSets.filter((c) => c !== code)
+      : [...selectedSets, code];
+    onSetsChange(next);
   }
 
   return (
@@ -53,6 +71,34 @@ export function SettingsPanel({
 
       {open && (
         <div className="settings-panel">
+          <p className="settings-section-label">Sets</p>
+          <p className="settings-hint">
+            Choose which sets to quiz from. Each question's wrong answers are
+            drawn from the shown card's own set.
+          </p>
+          {sets.map((s) => {
+            const checked = selectedSets.includes(s.code);
+            // Can't turn off the last selected set.
+            const locked = checked && selectedSets.length === 1;
+            return (
+              <label className="settings-set-row" key={s.code}>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={locked}
+                  onChange={() => toggleSet(s.code)}
+                />
+                <span className="settings-set-name">{s.name}</span>
+                <span className="settings-set-meta">
+                  {s.code.toUpperCase()} · {s.count}
+                </span>
+              </label>
+            );
+          })}
+
+          <p className="settings-section-label settings-section-label--spaced">
+            Card parts
+          </p>
           <p className="settings-hint">
             Put each part of the card in the prompt, quiz on it, or hide it.
             When several are set to Quiz, each round picks one at random.

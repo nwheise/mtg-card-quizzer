@@ -1,6 +1,8 @@
 // A single quizzable card, as produced by scripts/fetch-cards.mjs.
 export interface QuizCard {
   id: string;
+  // Scryfall set code this card belongs to (e.g. "msh", "hob").
+  set: string;
   name: string;
   artCrop: string;
   // Full card image (Scryfall `normal`), shown after answering to review the
@@ -19,6 +21,16 @@ export interface QuizCard {
 
 // Map of mana/symbol token (e.g. "{R}") to its SVG url, from symbols.json.
 export type SymbolMap = Record<string, string>;
+
+// One selectable set, from sets.json (written by scripts/fetch-cards.mjs).
+// `count` is the number of quiz cards the set contributes; `released` is the
+// Scryfall release date (ISO) used to pick the newest set as the default.
+export interface SetInfo {
+  code: string;
+  name: string;
+  released: string;
+  count: number;
+}
 
 // The parts of a card the player can independently route (see game/fields.ts).
 export type FieldId =
