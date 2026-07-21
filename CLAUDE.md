@@ -79,13 +79,23 @@ running dev server (e.g. with headless Chrome).
   `.frame--*`. The **answer boxes share that colour**: `OptionsGrid` gets the
   same `frame--*` class, and `.option`'s parchment is mixed from `--f-box`, so a
   blue card's answers sit on pale-blue stock like the card's own text box does.
+  Card text (name, type line, P/T) is black ink on a lightened, colour-tinted
+  nameplate (`--np-1/2/3`, derived from `--f1`), matching a printed card.
   The type bar ends in the **set symbol** — `SetInfo.icon` (Scryfall
-  `icon_svg_uri`, in `sets.json`) masked with a rarity-coloured gradient
-  (`.rarity-pip--icon`); it falls back to a plain rarity lozenge if the icon URL
-  is missing. Type is Cinzel (engraved names/labels) + Spectral (rules text), loaded
-  from Google Fonts in `index.html` with a system-serif fallback. Keep new
-  chrome warm (bronze/gold on near-black) rather than the neutral greys of a
-  default dark theme.
+  `icon_svg_uri`, in `sets.json`), masked in the type-line ink as `.set-glyph`
+  (Scryfall only ships a flat silhouette, so it's *not* colour-coded) — beside a
+  rarity-coloured `.rarity-gem`. Type is Cinzel (engraved names/labels) +
+  Spectral (rules text), loaded from Google Fonts in `index.html` with a
+  system-serif fallback. Keep new chrome warm (bronze/gold on near-black) rather
+  than the neutral greys of a default dark theme.
+- **Fit-to-viewport** — on wide screens the whole quiz fits one screen (no page
+  scroll): `.app` is `height: 100vh` with the card bounded by a viewport-height
+  `min()` on its width, and the six answers are a 2×3 grid of equal,
+  aspect-locked boxes (`--opt-ar`; the box is fit to its grid cell with
+  container-query units). Answer text is shrunk to fit its box by `useFitText`
+  in `OptionCard` (binary-searches font-size, re-fits via `ResizeObserver`), so
+  nothing scrolls or overflows. Short-answer rounds (mana cost, …) opt out of
+  the aspect lock and fitting — compact centred tiles instead.
 
 ## Things to know before changing data/rendering
 
@@ -94,9 +104,15 @@ running dev server (e.g. with headless Chrome).
 - **Double-faced cards are split per face.** `SPLIT_LAYOUTS` (`modal_dfc`,
   `transform`) emit one quiz entry per `card_faces[]` face, each with id
   `<scryfallId>-<i>`. Other layouts stay single entries.
-- **Sagas** have rules text baked into Scryfall's `art_crop`. `CardPrompt`
-  detects them by type line and crops to the right ~46% (the art) via the
-  `card-art--saga` CSS class — don't show the raw art_crop for them.
+- **Sagas** are laid out like a printed Saga: chapter-text column (the text box
+  / placeholder) on the left, art panel on the right, type line beneath
+  (`.card-saga-body` in `CardPrompt`). The answer tiles go portrait for Saga
+  rounds (`.options-grid--tall`). Saga `art_crop`s come two ways and `CardPrompt`
+  picks by the image's natural aspect ratio (read `onLoad`): most are a portrait
+  crop of just the art (`--saga-tall`, panel takes the art's own ratio via
+  `--saga-ar`, shown in full); a few legacy ones are landscape and bundle the
+  spoiler chapter-text column on the left (`--saga-wide`, cropped to the art on
+  the right). Never show a raw landscape saga art_crop uncropped — it spoils.
 - **Self-name redaction** lives in `OracleText.tsx`: a card's own name (full +
   pre-comma short name, per face) is blacked out so the text can't spoil the
   answer. Case-sensitive, whole-word, no lookbehind (older-Safari safe).
