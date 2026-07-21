@@ -33,11 +33,18 @@ export function OptionsGrid({
   // Short answers (mana cost, P/T, …) get a tighter grid — six one-line tiles
   // stretched to full width read as empty.
   const short = round.quizField !== "oracleText";
+  // On a Saga round the answers echo the card's tall chapter-text box, so the
+  // tiles go portrait (see .options-grid--tall).
+  const tall = !short && /\bSaga\b/.test(round.card.typeLine);
+
+  const modifier = short
+    ? " options-grid--short"
+    : tall
+      ? " options-grid--tall"
+      : "";
 
   return (
-    <div
-      className={`options-grid frame--${frame}${short ? " options-grid--short" : ""}`}
-    >
+    <div className={`options-grid frame--${frame}${modifier}`}>
       {round.options.map((card, index) => (
         <OptionCard
           key={card.id}
