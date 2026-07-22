@@ -4,15 +4,17 @@ import { FieldValue } from "./FieldValue.tsx";
 
 export type OptionState = "idle" | "correct" | "wrong" | "missed";
 
-// Font-size bounds (px) for fitting oracle text into a fixed-size box.
-const FIT_MAX = 15;
-const FIT_MIN = 6.5;
+// Font-size bounds, in cqh (percent of the box height). Because the answer box
+// keeps a fixed aspect ratio, a font sized in cqh is scale-invariant: the text
+// wraps to the same lines at any window size, so the box and its text grow and
+// shrink together and the text-to-box ratio never changes.
+const FIT_MAX = 6.5;
+const FIT_MIN = 2.6;
 
-// Shrinks the referenced element's font-size until its content stops
-// overflowing, so a long oracle text fits its box without a scrollbar — the way
-// a printed card shrinks its rules text to fit. Binary search between FIT_MIN
-// and FIT_MAX; re-runs when the content (deps) or the box size (ResizeObserver)
-// changes. A no-op when inactive (short answers already fit).
+// Finds the largest cqh font-size at which the content stops overflowing, so a
+// long oracle text fits its box without a scrollbar — the way a printed card
+// shrinks its rules text to fit. Binary search, run once per content change
+// (deps); no resize handling needed since the cqh size scales with the box.
 function useFitText(active: boolean, deps: unknown[]) {
   const ref = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
@@ -23,24 +25,28 @@ function useFitText(active: boolean, deps: unknown[]) {
       el.scrollHeight <= el.clientHeight + 0.5 &&
       el.scrollWidth <= el.clientWidth + 0.5;
 
+    let cancelled = false;
     const fit = () => {
-      el.style.fontSize = `${FIT_MAX}px`;
+      if (cancelled || !el.isConnected) return;
+      el.style.fontSize = `${FIT_MAX}cqh`;
       if (fits()) return;
       let lo = FIT_MIN;
       let hi = FIT_MAX;
-      while (hi - lo > 0.3) {
+      while (hi - lo > 0.05) {
         const mid = (lo + hi) / 2;
-        el.style.fontSize = `${mid}px`;
+        el.style.fontSize = `${mid}cqh`;
         if (fits()) lo = mid;
         else hi = mid;
       }
-      el.style.fontSize = `${lo}px`;
+      el.style.fontSize = `${lo}cqh`;
     };
 
     fit();
-    const ro = new ResizeObserver(fit);
-    ro.observe(el);
-    return () => ro.disconnect();
+    // The card fonts load async; text metrics change once they do, so re-fit.
+    document.fonts?.ready.then(fit);
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
   return ref;

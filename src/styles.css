@@ -728,32 +728,34 @@ body {
    Options — each one is a card's text box, cut out and laid on the table.
    --------------------------------------------------------------------------- */
 
-/* Answer boxes are aspect-locked to an oracle text box, so all six read as
-   uniform card text boxes. --opt-ar is width ÷ height. */
+/* Answer boxes are meant to read like a crop of the card's own text box: fixed
+   aspect ratio (--opt-ar = width ÷ height) so all six are uniform, and their
+   text sized in cqh (percent of box height) so it scales *with* the box — grow
+   the window and box + text zoom together, never re-proportioning. --cols/rows
+   and --gap drive the packing on wide screens. */
 .options-grid {
   --opt-ar: 1.5;
+  --cols: 1;
+  --rows: 6;
+  --gap: 0.8rem;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 0.8rem;
+  gap: var(--gap);
 }
 
 /* Saga rounds: the card's rules live in a tall chapter-text column, so the
-   answer boxes go portrait to match. */
+   answer boxes go portrait to match its shape. */
 .options-grid--tall {
   --opt-ar: 0.72;
 }
 
-/* Each grid cell is a size-query container. The box inside is fit to it,
-   keeping --opt-ar (letterboxed in the cell if the cell's ratio differs). On
-   narrow screens (1 column) the cell has no height of its own, so it takes the
-   box ratio directly. */
+/* Each slot is a size-query container the box's cqh font resolves against. The
+   box fills the slot exactly (no letterbox), so slots pack with only --gap
+   between them. On narrow screens the slot takes the box ratio from its width. */
 .option-slot {
   container-type: size;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 0;
   aspect-ratio: var(--opt-ar);
+  min-width: 0;
 }
 
 .option {
@@ -761,10 +763,8 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  /* Fit the box to the cell at the fixed ratio: as large as the cell allows in
-     whichever dimension binds. */
-  block-size: min(100cqb, calc(100cqi / var(--opt-ar)));
-  aspect-ratio: var(--opt-ar);
+  width: 100%;
+  height: 100%;
   text-align: left;
   /* The answer boxes are the same tinted parchment as the prompt card's text
      box: --f-box comes from the frame colour on the grid (.frame--*), so a blue
@@ -779,9 +779,10 @@ body {
   color: var(--parchment-ink);
   border: 3px solid var(--parchment-edge);
   border-radius: 9px;
-  padding: 0.6rem 0.7rem;
+  /* Percentage padding tracks the box width, so the margins scale with it. */
+  padding: 5% 5.5%;
   font-family: var(--font-card);
-  line-height: 1.35;
+  line-height: 1.32;
   cursor: pointer;
   overflow: hidden;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.28),
@@ -790,9 +791,9 @@ body {
 }
 
 /* The answer text fills the box like oracle text fills a card's text box —
-   top-left, one ability per line. Its font-size is shrunk to fit by
-   useFitText, so it never overflows (no scrollbar); overflow is clipped as a
-   backstop. */
+   top-left, one ability per line. useFitText sets its font-size in cqh so it
+   fits without a scrollbar and scales with the box; overflow is clipped as a
+   backstop. The em gap and cqh fallback keep everything proportional. */
 .option-text {
   flex: 1;
   min-height: 0;
@@ -800,8 +801,8 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  gap: 0.35em;
-  font-size: 0.95rem;
+  gap: 0.3em;
+  font-size: 5cqh;
 }
 
 .ability-word {
@@ -1048,11 +1049,11 @@ body {
   }
 }
 
-/* Wide screens: the whole quiz fits one viewport — card on the left, a 2×3 grid
-   of equal-sized answer tiles on the right. Nothing scrolls the page; the card
-   is bounded to the viewport height and the answer tiles share the height
-   evenly, so they stay uniform (each an equal card-text-box) and a long oracle
-   text scrolls inside its own tile rather than pushing the others off-screen. */
+/* Wide screens: the whole quiz fits one viewport — card on the left, the answer
+   boxes packed on the right. Nothing scrolls the page; the card is bounded to
+   the viewport height and the boxes are sized to tile the remaining space at
+   their fixed ratio, so they read as uniform crops of a card's text box and a
+   long oracle text just shrinks to fit its own box. */
 @media (min-width: 900px) {
   .app {
     display: grid;
@@ -1096,29 +1097,48 @@ body {
   .feedback {
     text-align: left;
   }
-  /* Six equal cells filling the column height: 2 wide × 3 tall. Each cell sizes
-     its aspect-locked box; the slot takes the cell's size (not its own ratio). */
+  /* The grid is a size-query container. Each box is sized (keeping --opt-ar) to
+     the largest it can be while --cols × --rows of them fit the grid — so the
+     boxes tile with only --gap between them, and the whole block is centred in
+     whatever space is left. Growing the window just zooms the boxes (and, via
+     cqh, their text) together. */
   .options-grid {
     flex: 1;
     min-height: 0;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(3, 1fr);
-    gap: 0.7rem;
+    container-type: size;
+    --cols: 2;
+    --rows: 3;
+    --gap: 0.7rem;
+    grid-template-columns: repeat(var(--cols), auto);
+    grid-auto-rows: auto;
+    justify-content: center;
+    align-content: center;
+    gap: var(--gap);
   }
   .option-slot {
-    aspect-ratio: auto;
+    block-size: min(
+      calc((100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows)),
+      calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols) / var(--opt-ar))
+    );
+    aspect-ratio: var(--opt-ar);
   }
-  /* Saga rounds: portrait tiles pack better 3-wide × 2-tall. */
+  /* Saga rounds: tall boxes matching the chapter-text column, 3 wide × 2 tall. */
   .options-grid--tall {
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, 1fr);
+    --cols: 3;
+    --rows: 2;
+    --opt-ar: 0.5;
   }
-  /* Short answers hold almost no text, so filling the column height leaves a
-     symbol marooned in a huge box. Cap their height and centre vertically. */
+  /* Short answers hold almost no text, so they stay compact, capped-height
+     tiles centred in the column rather than aspect-locked boxes. */
   .options-grid--short {
+    container-type: normal;
     grid-template-columns: repeat(3, 1fr);
     grid-template-rows: repeat(2, minmax(0, 5.5rem));
+    justify-content: stretch;
     align-content: center;
     gap: 0.9rem;
+  }
+  .options-grid--short .option-slot {
+    block-size: auto;
   }
 }
