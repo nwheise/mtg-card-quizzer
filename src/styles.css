@@ -734,7 +734,7 @@ body {
    the window and box + text zoom together, never re-proportioning. --cols/rows
    and --gap drive the packing on wide screens. */
 .options-grid {
-  --opt-ar: 1.5;
+  --opt-ar: 1.7;
   --cols: 1;
   --rows: 6;
   --gap: 0.8rem;

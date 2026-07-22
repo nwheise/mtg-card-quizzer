@@ -7,9 +7,11 @@ export type OptionState = "idle" | "correct" | "wrong" | "missed";
 // Font-size bounds, in cqh (percent of the box height). Because the answer box
 // keeps a fixed aspect ratio, a font sized in cqh is scale-invariant: the text
 // wraps to the same lines at any window size, so the box and its text grow and
-// shrink together and the text-to-box ratio never changes.
-const FIT_MAX = 6.5;
-const FIT_MIN = 2.6;
+// shrink together and the text-to-box ratio never changes. FIT_MAX is the
+// standard, legible card-text size (a short answer sits here, filling the box
+// like a printed card's rules text); longer answers shrink toward FIT_MIN.
+const FIT_MAX = 11;
+const FIT_MIN = 3.5;
 
 // Finds the largest cqh font-size at which the content stops overflowing, so a
 // long oracle text fits its box without a scrollbar — the way a printed card
