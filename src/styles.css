@@ -1096,8 +1096,10 @@ body {
     margin-top: 0;
     margin-bottom: 0.9rem;
   }
+  /* Right-align the question so it reads as a pair with the Next button on the
+     right, rather than marooned at the far left. */
   .feedback {
-    text-align: left;
+    text-align: right;
   }
 
   /* The card and the answer grid live in one horizontal box at a single height,
