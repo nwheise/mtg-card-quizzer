@@ -1143,7 +1143,10 @@ body {
     margin-bottom: 0;
     align-self: flex-start;
   }
-  .quiz-row .card {
+  /* Both the prompt frame and the revealed full-card image fill the row height,
+     so the reveal is the same size as the prompt was. */
+  .quiz-row .card,
+  .quiz-row .card-full {
     width: calc(var(--row-h) * var(--card-ar));
     height: var(--row-h);
     max-width: none;
