@@ -100,6 +100,36 @@ body {
   max-width: 1160px;
   margin: 0 auto;
   padding: 1.5rem 1.5rem 3.5rem;
+  /* Column stack on mobile (header, question bar, card, answers); the quiz-row
+     wrapper is transparent here so its children order inline. */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Mobile order: card, then the question bar, then the answers — the quiz-row
+   wrapper collapses (display: contents) so its children take part in the app's
+   own flex order. It also holds the answer-box layout variables (--opt-ar =
+   box width ÷ height, --gap), which inherit down to the grid and slots. */
+.quiz-row {
+  display: contents;
+  --opt-ar: 1.7;
+  --gap: 0.8rem;
+}
+.quiz-row--tall {
+  --opt-ar: 0.72;
+}
+.app-header {
+  order: 0;
+}
+.card-prompt {
+  order: 1;
+}
+.play-bar {
+  order: 2;
+  margin-top: 1.25rem;
+}
+.options-grid {
+  order: 3;
 }
 
 /* Header */
@@ -734,19 +764,9 @@ body {
    the window and box + text zoom together, never re-proportioning. --cols/rows
    and --gap drive the packing on wide screens. */
 .options-grid {
-  --opt-ar: 1.7;
-  --cols: 1;
-  --rows: 6;
-  --gap: 0.8rem;
   display: grid;
   grid-template-columns: 1fr;
   gap: var(--gap);
-}
-
-/* Saga rounds: the card's rules live in a tall chapter-text column, so the
-   answer boxes go portrait to match its shape. */
-.options-grid--tall {
-  --opt-ar: 0.72;
 }
 
 /* Each slot is a size-query container the box's cqh font resolves against. The
@@ -1033,9 +1053,12 @@ body {
   .play-bar {
     margin-bottom: 1rem;
   }
+  /* Centre with align-self, not auto margins — auto margins on a flex item
+     cancel the cross-axis stretch and collapse the grid to zero width. */
   .options-grid {
+    width: 100%;
     max-width: 620px;
-    margin: 0 auto;
+    align-self: center;
   }
   /* Six full-width tiles for a two-symbol mana cost is a lot of scrolling. */
   .options-grid--short {
@@ -1056,89 +1079,108 @@ body {
    long oracle text just shrinks to fit its own box. */
 @media (min-width: 900px) {
   .app {
-    display: grid;
-    grid-template-columns: minmax(300px, 400px) 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas:
-      "header header"
-      "card   play";
-    column-gap: 2.5rem;
-    height: 100vh;
-    align-items: stretch;
-    /* Rough height taken by the header + vertical padding, subtracted so the
-       card's aspect-ratio height lands inside the viewport. */
-    --fit-chrome: 11rem;
-  }
-  .app-header {
-    grid-area: header;
-  }
-  .card-prompt {
-    grid-area: card;
-    min-height: 0;
-    align-self: center;
-    justify-content: center;
-  }
-  /* Size the card by width so its aspect-ratio height fits the viewport: cap
-     width at whichever of the column, the max, or the height-derived width is
-     smallest. */
-  .card {
-    width: min(100%, 400px, calc((100vh - var(--fit-chrome)) * 488 / 680));
-  }
-  .play {
-    grid-area: play;
-    min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.85rem;
+    height: 100vh;
+    /* Fill the viewport so the quiz-row can scale up with it (the 1160px cap is
+       for the narrow, scrolling mobile layout). */
+    max-width: none;
+    padding-bottom: 1.5rem;
+  }
+  .app-header {
+    flex: none;
   }
   .play-bar {
     flex: none;
+    order: 0; /* reset the mobile ordering */
+    margin-top: 0;
+    margin-bottom: 0.9rem;
   }
   .feedback {
     text-align: left;
   }
-  /* The grid is a size-query container. Each box is sized (keeping --opt-ar) to
-     the largest it can be while --cols × --rows of them fit the grid — so the
-     boxes tile with only --gap between them, and the whole block is centred in
-     whatever space is left. Growing the window just zooms the boxes (and, via
-     cqh, their text) together. */
-  .options-grid {
+
+  /* The card and the answer grid live in one horizontal box at a single height,
+     --row-h, so the card ends up the same height as the answer stack. --row-h
+     is the largest height that fits both the space below the header (100cqh) and
+     the viewport width (100cqw): laid side by side, card width (row-h × card
+     ratio) + answer-grid width (cols boxes, each row-h/rows tall × opt-ar wide)
+     must fit across. --coef folds those widths per row-h into one factor
+     (card-ratio + cols·opt-ar/rows). Grow the window → the whole box zooms. */
+  .quiz-row {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: var(--row-gap);
     flex: 1;
     min-height: 0;
     container-type: size;
+    --gap: 0.7rem;
+    --row-gap: 2.25rem;
+    --card-ar: 0.71765; /* 488 / 680 */
     --cols: 2;
     --rows: 3;
-    --gap: 0.7rem;
-    grid-template-columns: repeat(var(--cols), auto);
-    grid-auto-rows: auto;
-    justify-content: center;
-    align-content: center;
-    gap: var(--gap);
-  }
-  .option-slot {
-    block-size: min(
-      calc((100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows)),
-      calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols) / var(--opt-ar))
+    --opt-ar: 1.7;
+    --coef: 1.85; /* card-ar + cols·opt-ar/rows */
+    --row-h: min(
+      100cqh,
+      calc((100cqw - var(--row-gap) - 2.5rem) / var(--coef))
     );
-    aspect-ratio: var(--opt-ar);
   }
-  /* Saga rounds: tall boxes matching the chapter-text column, 3 wide × 2 tall. */
-  .options-grid--tall {
+  .quiz-row--tall {
     --cols: 3;
     --rows: 2;
     --opt-ar: 0.5;
+    --coef: 1.468; /* 0.71765 + 3·0.5/2 */
   }
-  /* Short answers hold almost no text, so they stay compact, capped-height
-     tiles centred in the column rather than aspect-locked boxes. */
-  .options-grid--short {
+
+  .quiz-row .card-prompt {
+    flex: none;
+    order: 0;
+    margin-bottom: 0;
+    align-self: flex-start;
+  }
+  .quiz-row .card {
+    width: calc(var(--row-h) * var(--card-ar));
+    height: var(--row-h);
+    max-width: none;
+  }
+
+  /* The answer grid is exactly --row-h tall; its boxes are sized from that, so
+     they tile it with no gaps and match the card's height. */
+  .quiz-row .options-grid {
+    order: 0;
+    flex: none;
+    height: var(--row-h);
+    --box-h: calc(
+      (var(--row-h) - (var(--rows) - 1) * var(--gap)) / var(--rows)
+    );
+    grid-template-columns: repeat(var(--cols), calc(var(--box-h) * var(--opt-ar)));
+    grid-template-rows: repeat(var(--rows), var(--box-h));
+    gap: var(--gap);
+    max-width: none;
+    margin: 0;
+  }
+  .option-slot {
+    container-type: size;
+    aspect-ratio: auto; /* the grid cell already has the right ratio */
+  }
+
+  /* Short answers: the card keeps a normal fill-height size, and the mana-cost
+     tiles sit beside it as compact, capped-height tiles (not aspect-locked). */
+  .quiz-row--short {
+    align-items: center;
+    --coef: 1.85;
+  }
+  .quiz-row--short .options-grid {
+    height: auto;
+    grid-template-columns: repeat(2, minmax(7rem, 12rem));
+    grid-template-rows: repeat(3, minmax(0, 4.5rem));
+    gap: 0.8rem;
+  }
+  .quiz-row--short .option-slot {
     container-type: normal;
-    grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: repeat(2, minmax(0, 5.5rem));
-    justify-content: stretch;
-    align-content: center;
-    gap: 0.9rem;
-  }
-  .options-grid--short .option-slot {
-    block-size: auto;
+    aspect-ratio: auto;
   }
 }

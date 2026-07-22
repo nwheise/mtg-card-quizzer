@@ -188,6 +188,16 @@ export function App() {
     ? sets.find((s) => s.code === round.card.set)?.icon
     : undefined;
 
+  // The quiz-row shape follows the answer shape: short answers (mana, …), tall
+  // Saga chapter boxes, or the default oracle boxes — see the CSS.
+  const quizRowModifier = !round
+    ? ""
+    : round.quizField !== "oracleText"
+      ? " quiz-row--short"
+      : /\bSaga\b/.test(round.card.typeLine)
+        ? " quiz-row--tall"
+        : "";
+
   if (error) {
     return (
       <main className="app">
@@ -254,31 +264,34 @@ export function App() {
 
         {round ? (
           <>
-            <CardPrompt
-              card={round.card}
-              quizField={round.quizField}
-              frame={frame}
-              setIcon={setIcon}
-              symbols={symbols}
-              settings={settings}
-              revealed={pickedIndex !== null}
-            />
+            <div className="play-bar">
+              <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
+                {feedback ?? question}
+              </p>
 
-            <div className="play">
-              <div className="play-bar">
-                <p className={`feedback ${answeredCorrectly ? "feedback--ok" : pickedIndex !== null ? "feedback--bad" : ""}`}>
-                  {feedback ?? question}
-                </p>
+              <button
+                type="button"
+                className="next-button"
+                onClick={handleNext}
+                disabled={pickedIndex === null}
+              >
+                Next card →
+              </button>
+            </div>
 
-                <button
-                  type="button"
-                  className="next-button"
-                  onClick={handleNext}
-                  disabled={pickedIndex === null}
-                >
-                  Next card →
-                </button>
-              </div>
+            {/* Card and answers share one row: on wide screens they sit side by
+                side at a single, window-scaled height; on mobile the row is
+                transparent (display: contents) and they stack. */}
+            <div className={`quiz-row${quizRowModifier}`}>
+              <CardPrompt
+                card={round.card}
+                quizField={round.quizField}
+                frame={frame}
+                setIcon={setIcon}
+                symbols={symbols}
+                settings={settings}
+                revealed={pickedIndex !== null}
+              />
 
               <OptionsGrid
                 round={round}

@@ -88,14 +88,21 @@ running dev server (e.g. with headless Chrome).
   Spectral (rules text), loaded from Google Fonts in `index.html` with a
   system-serif fallback. Keep new chrome warm (bronze/gold on near-black) rather
   than the neutral greys of a default dark theme.
-- **Fit-to-viewport** — on wide screens the whole quiz fits one screen (no page
-  scroll): `.app` is `height: 100vh` with the card bounded by a viewport-height
-  `min()` on its width, and the six answers are a 2×3 grid of equal,
-  aspect-locked boxes (`--opt-ar`; the box is fit to its grid cell with
-  container-query units). Answer text is shrunk to fit its box by `useFitText`
-  in `OptionCard` (binary-searches font-size, re-fits via `ResizeObserver`), so
-  nothing scrolls or overflows. Short-answer rounds (mana cost, …) opt out of
-  the aspect lock and fitting — compact centred tiles instead.
+- **Fit-to-viewport** — on wide screens (`min-width: 900px`) the card and the
+  answer grid sit in one horizontal box, `.quiz-row`, at a single height
+  `--row-h` so the card ends up the same height as the answer stack, and the
+  whole box scales with the window (no page scroll; `.app` is `height: 100vh`,
+  flex column: header, question bar, quiz-row). `--row-h` is the largest height
+  that fits both `100cqh` and the width (`100cqw` ÷ `--coef`, where `--coef`
+  folds in the card ratio plus `cols·opt-ar/rows`); card and boxes derive their
+  size from it. The six answers are a `--cols`×`--rows` grid of equal,
+  aspect-locked boxes (`--opt-ar`, box width÷height); Saga rounds go tall
+  (`.quiz-row--tall`), short rounds (mana, …) become compact tiles
+  (`.quiz-row--short`). Layout vars live on `.quiz-row` and inherit down. Answer
+  text is sized in cqh by `useFitText` in `OptionCard` (binary-search, run once
+  per card + after fonts load) so it scales *with* its box and never overflows.
+  On mobile `.quiz-row` is `display: contents` and everything stacks (card,
+  question bar, answers) and scrolls — the original vertical layout.
 
 ## Things to know before changing data/rendering
 
